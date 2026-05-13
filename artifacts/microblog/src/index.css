@@ -1,0 +1,784 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+
+  --font-sans: var(--app-font-body);
+  --font-serif: var(--app-font-body);
+  --font-mono: var(--app-font-mono);
+
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+}
+
+:root {
+  /* Bauhaus/Brutalist Palette - STRICT TRICOLOR (initial defaults; ThemeInjector
+     overrides at runtime from server settings). */
+  --bauhaus-red: 0 100% 50%;
+  --bauhaus-blue: 240 100% 50%;
+  --bauhaus-yellow: 60 100% 50%;
+  --bauhaus-white: 0 0% 100%;
+  --bauhaus-black: 0 0% 0%;
+
+  --background: var(--bauhaus-white);
+  --foreground: var(--bauhaus-black);
+
+  --card: var(--bauhaus-white);
+  --card-foreground: var(--bauhaus-black);
+  --card-border: var(--bauhaus-black);
+
+  --popover: var(--bauhaus-white);
+  --popover-foreground: var(--bauhaus-black);
+  --popover-border: var(--bauhaus-black);
+
+  --primary: var(--bauhaus-red);
+  --primary-foreground: var(--bauhaus-white);
+  --primary-border: var(--bauhaus-black);
+
+  --secondary: var(--bauhaus-blue);
+  --secondary-foreground: var(--bauhaus-white);
+  --secondary-border: var(--bauhaus-black);
+
+  --muted: var(--bauhaus-yellow);
+  --muted-foreground: var(--bauhaus-black);
+  --muted-border: var(--bauhaus-black);
+
+  --accent: var(--bauhaus-yellow);
+  --accent-foreground: var(--bauhaus-black);
+  --accent-border: var(--bauhaus-black);
+
+  --destructive: var(--bauhaus-red);
+  --destructive-foreground: var(--bauhaus-white);
+  --destructive-border: var(--bauhaus-black);
+
+  --border: var(--bauhaus-black);
+  --input: var(--bauhaus-white);
+  --ring: var(--bauhaus-blue);
+
+  --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Per-theme structural variables. Defaults match Bauhaus and are overridden
+     by `[data-theme="..."]` rules below. */
+  --app-font-body: 'Space Grotesk', system-ui, sans-serif;
+  --app-font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --app-body-weight: 700;
+  --app-heading-weight: 900;
+  --app-heading-transform: uppercase;
+  --app-heading-tracking: -0.05em;
+
+  --radius: 0rem;
+
+  --app-button-border-width: 4px;
+  --app-button-radius: var(--radius);
+  --app-button-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-button-active-shadow: 2px 2px 0 0 hsl(var(--border));
+  --app-button-hover-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-button-hover-transform: translate(-4px, -4px);
+  --app-button-hover-filter: brightness(1.2);
+
+  --app-card-border-width: 4px;
+  --app-card-radius: var(--radius);
+  --app-card-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-card-hover-shadow: 12px 12px 0 0 hsl(var(--border));
+  --app-card-hover-transform: translate(-4px, -4px);
+
+  --app-avatar-border-width: 4px;
+  --app-avatar-radius: var(--radius);
+  --app-avatar-shadow: 2px 2px 0 0 hsl(var(--border));
+
+  --app-grid-border-width: 4px;
+  --app-nav-border-width: 8px;
+  --app-footer-border-width: 4px;
+
+  /* Tailwind shadow tokens still drive a few utility classes. */
+  --shadow-sm: 2px 2px 0px 0px hsl(var(--border));
+  --shadow: 4px 4px 0px 0px hsl(var(--border));
+  --shadow-md: 8px 8px 0px 0px hsl(var(--border));
+
+  --sidebar-primary-border: hsl(var(--primary));
+  --sidebar-accent-border: hsl(var(--accent));
+}
+
+.dark {
+  --background: var(--bauhaus-black);
+  --foreground: var(--bauhaus-white);
+
+  --primary: var(--bauhaus-red);
+  --primary-foreground: var(--bauhaus-black);
+
+  --card: var(--bauhaus-black);
+  --card-foreground: var(--bauhaus-white);
+  --card-border: var(--bauhaus-white);
+
+  --popover: var(--bauhaus-black);
+  --popover-foreground: var(--bauhaus-white);
+  --popover-border: var(--bauhaus-white);
+
+  --secondary: var(--bauhaus-blue);
+  --secondary-foreground: var(--bauhaus-white);
+
+  --muted: var(--bauhaus-yellow);
+  --muted-foreground: var(--bauhaus-black);
+
+  --accent: var(--bauhaus-yellow);
+  --accent-foreground: var(--bauhaus-black);
+
+  --destructive: var(--bauhaus-red);
+  --destructive-foreground: var(--bauhaus-white);
+
+  --border: var(--bauhaus-white);
+  --input: var(--bauhaus-black);
+  --ring: var(--bauhaus-blue);
+}
+
+/* ===========================================================================
+   Theme variants
+   --------------------------------------------------------------------------- */
+
+/* Mirror the `:root` defaults so a scoped `data-theme="bauhaus"` (e.g. inside
+   the SiteCustomizationCard preview tiles) resolves the same structural vars
+   as the global default — without this, a bauhaus preview rendered while a
+   different theme is globally active would inherit that theme's structure. */
+[data-theme="bauhaus"] {
+  --app-font-body: 'Space Grotesk', system-ui, sans-serif;
+  --app-font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --app-body-weight: 700;
+  --app-heading-weight: 900;
+  --app-heading-transform: uppercase;
+  --app-heading-tracking: -0.05em;
+
+  --radius: 0rem;
+
+  --app-button-border-width: 4px;
+  --app-button-radius: var(--radius);
+  --app-button-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-button-active-shadow: 2px 2px 0 0 hsl(var(--border));
+  --app-button-hover-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-button-hover-transform: translate(-4px, -4px);
+  --app-button-hover-filter: brightness(1.2);
+
+  --app-card-border-width: 4px;
+  --app-card-radius: var(--radius);
+  --app-card-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-card-hover-shadow: 12px 12px 0 0 hsl(var(--border));
+  --app-card-hover-transform: translate(-4px, -4px);
+
+  --app-avatar-border-width: 4px;
+  --app-avatar-radius: var(--radius);
+  --app-avatar-shadow: 2px 2px 0 0 hsl(var(--border));
+
+  --app-grid-border-width: 4px;
+  --app-nav-border-width: 8px;
+  --app-footer-border-width: 4px;
+}
+
+[data-theme="traditional"] {
+  --app-font-body: 'Lora', Georgia, 'Times New Roman', serif;
+  --app-font-heading: 'Lora', Georgia, 'Times New Roman', serif;
+  --app-body-weight: 400;
+  --app-heading-weight: 700;
+  --app-heading-transform: none;
+  --app-heading-tracking: -0.005em;
+
+  --radius: 0.25rem;
+
+  --app-button-border-width: 1px;
+  --app-button-shadow: none;
+  --app-button-active-shadow: none;
+  --app-button-hover-shadow: none;
+  --app-button-hover-transform: none;
+  --app-button-hover-filter: brightness(0.95);
+
+  --app-card-border-width: 1px;
+  --app-card-shadow: none;
+  --app-card-hover-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+  --app-card-hover-transform: none;
+
+  --app-avatar-border-width: 1px;
+  --app-avatar-shadow: none;
+
+  --app-grid-border-width: 1px;
+  --app-nav-border-width: 1px;
+  --app-footer-border-width: 1px;
+}
+
+[data-theme="minimalist"] {
+  --app-font-body: 'Inter', system-ui, sans-serif;
+  --app-font-heading: 'Inter', system-ui, sans-serif;
+  --app-body-weight: 400;
+  --app-heading-weight: 600;
+  --app-heading-transform: none;
+  --app-heading-tracking: -0.02em;
+
+  --radius: 0rem;
+
+  --app-button-border-width: 0;
+  --app-button-shadow: none;
+  --app-button-active-shadow: none;
+  --app-button-hover-shadow: none;
+  --app-button-hover-transform: none;
+  --app-button-hover-filter: brightness(0.95);
+
+  --app-card-border-width: 0;
+  --app-card-shadow: none;
+  --app-card-hover-shadow: none;
+  --app-card-hover-transform: none;
+
+  --app-avatar-border-width: 0;
+  --app-avatar-shadow: none;
+
+  --app-grid-border-width: 0;
+  --app-nav-border-width: 1px;
+  --app-footer-border-width: 1px;
+}
+
+[data-theme="academic"] {
+  --app-font-body: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --app-font-heading: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --app-body-weight: 400;
+  --app-heading-weight: 700;
+  --app-heading-transform: none;
+  --app-heading-tracking: 0;
+
+  --radius: 0.125rem;
+
+  --app-button-border-width: 1px;
+  --app-button-shadow: 0 1px 0 0 hsl(var(--border));
+  --app-button-active-shadow: none;
+  --app-button-hover-shadow: 0 2px 0 0 hsl(var(--border));
+  --app-button-hover-transform: translate(0, -1px);
+  --app-button-hover-filter: brightness(0.97);
+
+  --app-card-border-width: 1px;
+  --app-card-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+  --app-card-hover-shadow: 0 2px 6px rgb(0 0 0 / 0.12);
+  --app-card-hover-transform: none;
+
+  --app-avatar-border-width: 1px;
+  --app-avatar-shadow: none;
+
+  --app-grid-border-width: 1px;
+  --app-nav-border-width: 2px;
+  --app-footer-border-width: 2px;
+}
+
+[data-theme="airy"] {
+  --app-font-body: 'Inter', system-ui, sans-serif;
+  --app-font-heading: 'Inter', system-ui, sans-serif;
+  --app-body-weight: 300;
+  --app-heading-weight: 500;
+  --app-heading-transform: none;
+  --app-heading-tracking: -0.02em;
+
+  --radius: 0.75rem;
+
+  --app-button-border-width: 0;
+  --app-button-shadow: none;
+  --app-button-active-shadow: none;
+  --app-button-hover-shadow: 0 4px 12px rgb(0 0 0 / 0.06);
+  --app-button-hover-transform: none;
+  --app-button-hover-filter: brightness(0.97);
+
+  --app-card-border-width: 0;
+  --app-card-shadow: 0 8px 24px rgb(0 0 0 / 0.06);
+  --app-card-hover-shadow: 0 16px 32px rgb(0 0 0 / 0.08);
+  --app-card-hover-transform: none;
+
+  --app-avatar-border-width: 0;
+  --app-avatar-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
+
+  --app-grid-border-width: 0;
+  --app-nav-border-width: 0;
+  --app-footer-border-width: 0;
+}
+
+[data-theme="nature"] {
+  --app-font-body: 'Nunito', system-ui, sans-serif;
+  --app-font-heading: 'Nunito', system-ui, sans-serif;
+  --app-body-weight: 400;
+  --app-heading-weight: 800;
+  --app-heading-transform: none;
+  --app-heading-tracking: -0.01em;
+
+  --radius: 0.75rem;
+
+  --app-button-border-width: 1px;
+  --app-button-shadow: 0 2px 4px rgb(0 0 0 / 0.06);
+  --app-button-active-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  --app-button-hover-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+  --app-button-hover-transform: translate(0, -1px);
+  --app-button-hover-filter: brightness(1.02);
+
+  --app-card-border-width: 1px;
+  --app-card-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+  --app-card-hover-shadow: 0 8px 20px rgb(0 0 0 / 0.12);
+  --app-card-hover-transform: translate(0, -2px);
+
+  --app-avatar-border-width: 2px;
+  --app-avatar-shadow: 0 2px 4px rgb(0 0 0 / 0.08);
+
+  --app-grid-border-width: 1px;
+  --app-nav-border-width: 1px;
+  --app-footer-border-width: 1px;
+}
+
+[data-theme="comfort"] {
+  --app-font-body: 'Quicksand', system-ui, sans-serif;
+  --app-font-heading: 'Quicksand', system-ui, sans-serif;
+  --app-body-weight: 500;
+  --app-heading-weight: 700;
+  --app-heading-transform: none;
+  --app-heading-tracking: -0.01em;
+
+  --radius: 1rem;
+
+  --app-button-border-width: 0;
+  --app-button-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
+  --app-button-active-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+  --app-button-hover-shadow: 0 6px 14px rgb(0 0 0 / 0.12);
+  --app-button-hover-transform: translate(0, -1px);
+  --app-button-hover-filter: brightness(1.04);
+
+  --app-card-border-width: 0;
+  --app-card-shadow: 0 6px 16px rgb(0 0 0 / 0.08);
+  --app-card-hover-shadow: 0 10px 24px rgb(0 0 0 / 0.12);
+  --app-card-hover-transform: translate(0, -2px);
+
+  --app-avatar-border-width: 0;
+  --app-avatar-shadow: 0 4px 10px rgb(0 0 0 / 0.08);
+
+  --app-grid-border-width: 0;
+  --app-nav-border-width: 0;
+  --app-footer-border-width: 0;
+}
+
+[data-theme="audacious"] {
+  --app-font-body: 'Space Grotesk', system-ui, sans-serif;
+  --app-font-heading: 'Bebas Neue', 'Space Grotesk', sans-serif;
+  --app-body-weight: 600;
+  /* Bebas Neue is a single-weight display face — `normal` keeps the metrics. */
+  --app-heading-weight: 400;
+  --app-heading-transform: uppercase;
+  --app-heading-tracking: 0.05em;
+
+  --radius: 0rem;
+
+  --app-button-border-width: 6px;
+  --app-button-shadow: 8px 8px 0 0 hsl(var(--border));
+  --app-button-active-shadow: 2px 2px 0 0 hsl(var(--border));
+  --app-button-hover-shadow: 12px 12px 0 0 hsl(var(--border));
+  --app-button-hover-transform: translate(-4px, -4px);
+  --app-button-hover-filter: brightness(1.15);
+
+  --app-card-border-width: 6px;
+  --app-card-shadow: 10px 10px 0 0 hsl(var(--border));
+  --app-card-hover-shadow: 14px 14px 0 0 hsl(var(--border));
+  --app-card-hover-transform: translate(-4px, -4px);
+
+  --app-avatar-border-width: 4px;
+  --app-avatar-shadow: 4px 4px 0 0 hsl(var(--border));
+
+  --app-grid-border-width: 6px;
+  --app-nav-border-width: 8px;
+  --app-footer-border-width: 6px;
+}
+
+[data-theme="artistic"] {
+  --app-font-body: 'Lora', Georgia, serif;
+  --app-font-heading: 'Caveat', 'Lora', cursive;
+  --app-body-weight: 400;
+  --app-heading-weight: 700;
+  --app-heading-transform: none;
+  --app-heading-tracking: 0;
+
+  --radius: 0.25rem;
+
+  --app-button-border-width: 2px;
+  --app-button-shadow: 3px 3px 0 0 hsl(var(--border) / 0.6);
+  --app-button-active-shadow: 1px 1px 0 0 hsl(var(--border) / 0.6);
+  --app-button-hover-shadow: 4px 4px 0 0 hsl(var(--border) / 0.6);
+  --app-button-hover-transform: rotate(-1deg);
+  --app-button-hover-filter: brightness(1.05);
+
+  --app-card-border-width: 2px;
+  --app-card-shadow: 4px 4px 0 0 hsl(var(--border) / 0.5);
+  --app-card-hover-shadow: 6px 6px 0 0 hsl(var(--border) / 0.5);
+  --app-card-hover-transform: rotate(-0.3deg);
+
+  --app-avatar-border-width: 2px;
+  --app-avatar-shadow: 2px 2px 0 0 hsl(var(--border) / 0.5);
+
+  --app-grid-border-width: 2px;
+  --app-nav-border-width: 2px;
+  --app-footer-border-width: 2px;
+}
+
+/* ===========================================================================
+   Base + component layers, all driven by the theme variables above so each
+   `[data-theme="..."]` selection above changes the look without touching
+   per-element selectors here.
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    border-width: 0;
+  }
+  body {
+    font-family: var(--app-font-body);
+    font-weight: var(--app-body-weight);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body ::selection {
+    background-color: hsl(var(--accent) / 0.5);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--app-font-heading);
+    font-weight: var(--app-heading-weight);
+    text-transform: var(--app-heading-transform);
+    letter-spacing: var(--app-heading-tracking);
+  }
+}
+
+@layer components {
+  /* Specificity: prefixing with `[data-theme]` makes these rules (0,0,1,1)
+     so they beat single-class Tailwind utilities like `.border`
+     (`border-width: 1px`) and `.rounded-md` defined in `@layer utilities`.
+     Every page gets `data-theme` set on <html> by ThemeInjector, so this
+     selector matches universally. */
+  [data-theme] .button,
+  [data-theme] button,
+  [data-theme] [role="button"] {
+    border-width: var(--app-button-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    box-shadow: var(--app-button-shadow);
+    border-radius: var(--app-button-radius);
+    transition: transform 75ms ease, box-shadow 75ms ease, filter 75ms ease;
+  }
+
+  [data-theme] button:hover,
+  [data-theme] .button:hover,
+  [data-theme] [role="button"]:hover {
+    transform: var(--app-button-hover-transform);
+    box-shadow: var(--app-button-hover-shadow);
+    filter: var(--app-button-hover-filter);
+  }
+
+  [data-theme] button:active,
+  [data-theme] .button:active,
+  [data-theme] [role="button"]:active {
+    transform: none;
+    box-shadow: var(--app-button-active-shadow);
+  }
+
+  .primary-btn {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .secondary-btn {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+  }
+
+  .accent-btn {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .brutalist-card {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border-width: var(--app-card-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    box-shadow: var(--app-card-shadow);
+    border-radius: var(--app-card-radius);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .brutalist-card:hover {
+    box-shadow: var(--app-card-hover-shadow);
+    transform: var(--app-card-hover-transform);
+  }
+
+  .brutalist-avatar {
+    border-width: var(--app-avatar-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    box-shadow: var(--app-avatar-shadow);
+    border-radius: var(--app-avatar-radius);
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+  }
+
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    border-top-width: var(--app-grid-border-width);
+    border-left-width: var(--app-grid-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+  }
+
+  @media (min-width: 768px) {
+    .grid-layout {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+  }
+
+  .interactive-grid-item {
+    border-right-width: var(--app-grid-border-width);
+    border-bottom-width: var(--app-grid-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    padding: 1.5rem;
+  }
+
+  .sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: hsl(var(--background));
+    border-bottom-width: var(--app-nav-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  @media (min-width: 768px) {
+    .sticky-nav {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  .bauhaus-footer {
+    border-top-width: var(--app-footer-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    padding: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .bauhaus-footer {
+      padding: 3rem;
+    }
+  }
+
+  .text-outline {
+    -webkit-text-stroke: 2px hsl(var(--foreground));
+    color: transparent;
+  }
+
+  /* Theme preview tiles in SiteCustomizationCard. Static rules live here so
+     the React component only has to push dynamic palette vars via inline
+     `style`, keeping its inline `style` value type-safe (no `var(...)` strings
+     in CSSProperties typed fields). The `data-theme` on the root cascades
+     structural variables (font, border-width, shadow, radius) onto the
+     subtree only — so each tile renders its own theme without affecting the
+     surrounding page. */
+  .theme-preview-root {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    padding: 10px;
+    height: 104px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .theme-preview-card {
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border-width: var(--app-card-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    box-shadow: var(--app-card-shadow);
+    border-radius: var(--app-card-radius);
+    padding: 8px 10px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .theme-preview-heading {
+    font-family: var(--app-font-heading);
+    font-weight: var(--app-heading-weight);
+    text-transform: var(--app-heading-transform);
+    letter-spacing: var(--app-heading-tracking);
+    font-size: 15px;
+    line-height: 1.05;
+  }
+
+  .theme-preview-subtext {
+    font-family: var(--app-font-body);
+    font-weight: var(--app-body-weight);
+    font-size: 9px;
+    margin-top: 3px;
+    opacity: 0.7;
+  }
+
+  .theme-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .theme-preview-button {
+    display: inline-block;
+    padding: 2px 8px;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-width: var(--app-button-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    box-shadow: var(--app-button-shadow);
+    border-radius: var(--app-button-radius);
+    font-family: var(--app-font-body);
+    font-weight: var(--app-body-weight);
+    font-size: 9px;
+    line-height: 1.1;
+  }
+
+  .theme-preview-avatar {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: hsl(var(--accent));
+    border-width: var(--app-avatar-border-width);
+    border-style: solid;
+    border-color: hsl(var(--border));
+    box-shadow: var(--app-avatar-shadow);
+    border-radius: var(--app-avatar-radius);
+  }
+
+  .wysiwyg-toolbar button,
+  .wysiwyg-toolbar [role="button"] {
+    border-width: 1px;
+    border-style: solid;
+    border-color: hsl(var(--border) / 0.25);
+    border-radius: 0.25rem;
+    box-shadow: none;
+    transform: none;
+    filter: none;
+  }
+
+  .wysiwyg-toolbar button:hover,
+  .wysiwyg-toolbar [role="button"]:hover,
+  .wysiwyg-toolbar button:active,
+  .wysiwyg-toolbar [role="button"]:active {
+    box-shadow: none;
+    transform: none;
+    filter: none;
+  }
+
+  .wysiwyg-toolbar-button {
+    background: hsl(var(--background));
+  }
+
+  .wysiwyg-toolbar-button[data-state="open"] {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .wysiwyg-editor-content strong,
+  .wysiwyg-rendered-content strong {
+    font-weight: 800;
+    color: hsl(var(--foreground));
+  }
+
+  .wysiwyg-editor-content h1,
+  .wysiwyg-rendered-content h1,
+  .wysiwyg-editor-content h2,
+  .wysiwyg-rendered-content h2,
+  .wysiwyg-editor-content h3,
+  .wysiwyg-rendered-content h3,
+  .wysiwyg-editor-content h4,
+  .wysiwyg-rendered-content h4,
+  .wysiwyg-editor-content h5,
+  .wysiwyg-rendered-content h5,
+  .wysiwyg-editor-content h6,
+  .wysiwyg-rendered-content h6 {
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .bauhaus-red { color: #FF0000; }
+  .bauhaus-blue { color: #0000FF; }
+  .bauhaus-yellow { color: #FFFF00; }
+
+  .bg-bauhaus-red { background-color: #FF0000; }
+  .bg-bauhaus-blue { background-color: #0000FF; }
+  .bg-bauhaus-yellow { background-color: #FFFF00; }
+
+  .border-r-thick { border-right-width: 8px; }
+  .border-b-thick { border-bottom-width: 8px; }
+  .border-l-thick { border-left-width: 8px; }
+
+  .shadow-neo {
+    box-shadow: 6px 6px 0px 0px hsl(var(--border));
+  }
+
+  .animate-brutal-pop {
+    animation: brutalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+}
+
+@keyframes brutalPop {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
