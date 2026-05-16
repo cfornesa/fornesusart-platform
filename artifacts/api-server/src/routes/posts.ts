@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, mysqlPool, postsTable, commentsTable, feedSourcesTable, categoriesTable, postCategoriesTable, eq, desc, count, and, isNull, inArray, notExists, sql, formatMysqlDateTime } from "@workspace/db";
+import { db, mysqlPool, postsTable, commentsTable, feedSourcesTable, categoriesTable, postCategoriesTable, eq, desc, count, and, or, isNull, inArray, notExists, sql, gte, lte, formatMysqlDateTime, formatMysqlDateTimeUtc } from "@workspace/db";
 import {
   attachCategoriesToPosts,
   hydratePostCategories,
@@ -31,6 +31,13 @@ import {
 import { enqueueSyndication } from "../lib/syndication/index";
 import { getOrigin } from "./feeds";
 import type { RowDataPacket } from "mysql2/promise";
+
+// Convert a naive MySQL DATETIME string ("YYYY-MM-DD HH:mm:ss.mmm" stored as UTC)
+// to a proper UTC ISO 8601 string so browser parseISO treats it correctly.
+function toUtcIso(s: string | null | undefined): string | null {
+  if (!s) return null;
+  return s.replace(" ", "T") + "Z";
+}
 
 // Attach successful syndication badges to a list of posts in-place.
 async function attachSyndications<T extends { id: number }>(
@@ -101,6 +108,49 @@ router.get("/feed/stats", async (_req: Request, res: Response) => {
     });
   } catch (err) {
     return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /posts/drafts — owner's draft posts (no date), sorted newest-first
+router.get("/posts/drafts", requireAuth, requireOwner, async (req: Request, res: Response) => {
+  try {
+    const posts = await db
+      .select({
+        id: postsTable.id,
+        authorId: postsTable.authorId,
+        authorName: postsTable.authorName,
+        authorImageUrl: postsTable.authorImageUrl,
+        title: postsTable.title,
+        content: postsTable.content,
+        contentFormat: postsTable.contentFormat,
+        status: postsTable.status,
+        scheduledAt: postsTable.scheduledAt,
+        pendingPlatformIds: postsTable.pendingPlatformIds,
+        sourceFeedId: postsTable.sourceFeedId,
+        sourceFeedName: feedSourcesTable.name,
+        sourceCanonicalUrl: postsTable.sourceCanonicalUrl,
+        createdAt: postsTable.createdAt,
+        commentCount: count(commentsTable.id),
+      })
+      .from(postsTable)
+      .leftJoin(commentsTable, eq(commentsTable.postId, postsTable.id))
+      .leftJoin(feedSourcesTable, eq(feedSourcesTable.id, postsTable.sourceFeedId))
+      .where(eq(postsTable.status, "draft"))
+      .groupBy(postsTable.id)
+      .orderBy(desc(postsTable.createdAt));
+
+    const hydrated = await attachCategoriesToPosts(posts);
+    return res.json({
+      posts: hydrated.map((p) => ({
+        ...p,
+        scheduledAt: toUtcIso(p.scheduledAt),
+        pendingPlatformIds: p.pendingPlatformIds ? (JSON.parse(p.pendingPlatformIds) as number[]) : null,
+        syndications: [],
+      })),
+      total: hydrated.length,
+    });
+  } catch (err) {
+    return res.status(400).json({ error: "Invalid request" });
   }
 });
 
@@ -397,10 +447,89 @@ router.get("/posts/search", async (req: Request, res: Response) => {
   }
 });
 
-// GET /posts — list paginated posts
+// GET /posts — list paginated posts (public) or owner calendar view (?view=owner)
 router.get("/posts", async (req: Request, res: Response) => {
   try {
     const query = ListPostsQueryParams.parse(req.query);
+
+    // Owner calendar view: returns all statuses + date range filter.
+    if (query.view === "owner") {
+      const { user } = await loadCurrentUser(req);
+      if (!user || user.role !== "owner") {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      type Condition = Parameters<typeof and>[0];
+      const calendarConditions: Condition[] = [
+        // Owner-authored posts of any non-draft status (draft = separate endpoint)
+        or(
+          and(
+            eq(postsTable.authorId, user.id),
+            inArray(postsTable.status, ["published", "scheduled"] as const),
+          ),
+          // RSS-imported published posts
+          and(
+            isNull(postsTable.authorUserId),
+            eq(postsTable.status, "published"),
+          ),
+        ),
+      ];
+      if (query.from) {
+        calendarConditions.push(
+          or(
+            gte(postsTable.scheduledAt, query.from),
+            gte(postsTable.createdAt, query.from),
+          ),
+        );
+      }
+      if (query.to) {
+        const toEnd = `${query.to} 23:59:59.999`;
+        calendarConditions.push(
+          or(
+            lte(postsTable.scheduledAt, toEnd),
+            lte(postsTable.createdAt, toEnd),
+          ),
+        );
+      }
+      const calendarPosts = await db
+        .select({
+          id: postsTable.id,
+          authorId: postsTable.authorId,
+          authorName: postsTable.authorName,
+          authorImageUrl: postsTable.authorImageUrl,
+          title: postsTable.title,
+          content: postsTable.content,
+          contentFormat: postsTable.contentFormat,
+          status: postsTable.status,
+          scheduledAt: postsTable.scheduledAt,
+          pendingPlatformIds: postsTable.pendingPlatformIds,
+          sourceFeedId: postsTable.sourceFeedId,
+          sourceFeedName: feedSourcesTable.name,
+          sourceCanonicalUrl: postsTable.sourceCanonicalUrl,
+          createdAt: postsTable.createdAt,
+          commentCount: count(commentsTable.id),
+        })
+        .from(postsTable)
+        .leftJoin(commentsTable, eq(commentsTable.postId, postsTable.id))
+        .leftJoin(feedSourcesTable, eq(feedSourcesTable.id, postsTable.sourceFeedId))
+        .where(and(...calendarConditions))
+        .groupBy(postsTable.id)
+        .orderBy(desc(postsTable.createdAt));
+      const hydrated = await attachCategoriesToPosts(calendarPosts);
+      const withSyndications = await attachSyndications(hydrated);
+      return res.json({
+        posts: withSyndications.map((p) => ({
+          ...p,
+          scheduledAt: toUtcIso((p as { scheduledAt?: string | null }).scheduledAt),
+          pendingPlatformIds: (p as { pendingPlatformIds?: string | null }).pendingPlatformIds
+            ? (JSON.parse((p as { pendingPlatformIds: string }).pendingPlatformIds) as number[])
+            : null,
+        })),
+        total: withSyndications.length,
+        page: 1,
+        limit: withSyndications.length,
+      });
+    }
+
     const { page, limit } = query;
     const offset = (page - 1) * limit;
 
@@ -485,7 +614,7 @@ router.get("/posts", async (req: Request, res: Response) => {
   }
 });
 
-// POST /posts — create a post
+// POST /posts — create a post (published, draft, or scheduled)
 router.post("/posts", requireAuth, requireOwner, async (req: Request, res: Response) => {
   try {
     const rawPlatformIds = Array.isArray(req.body.platformIds)
@@ -495,14 +624,24 @@ router.post("/posts", requireAuth, requireOwner, async (req: Request, res: Respo
       : [];
 
     const body = CreatePostBody.parse(req.body);
+    const postStatus = body.status ?? "published";
+
+    // Validate scheduledAt when scheduling.
+    if (postStatus === "scheduled") {
+      if (!body.scheduledAt) {
+        return res.status(400).json({ error: "scheduledAt is required when status is 'scheduled'" });
+      }
+      const scheduledMs = (body.scheduledAt as Date).getTime();
+      if (scheduledMs < Date.now() + 1_800_000) {
+        return res.status(400).json({ error: "scheduledAt must be at least 30 minutes in the future" });
+      }
+    }
+
     const currentUser = req.currentUser!;
     const authorName = currentUser.name || currentUser.email || "Anonymous";
     const normalizedContent =
       body.contentFormat === "html" ? sanitizeRichHtml(body.content) : body.content.trim();
 
-    // Pre-validate categoryIds outside the transaction so a 400 never
-    // requires rolling back any writes. Strict: every supplied value
-    // must be a positive integer that already exists.
     if (Array.isArray(body.categoryIds) && body.categoryIds.length > 0) {
       try {
         await validateCategoryIds(body.categoryIds);
@@ -517,9 +656,6 @@ router.post("/posts", requireAuth, requireOwner, async (req: Request, res: Respo
       }
     }
 
-    // Single transaction: post insert + category join writes commit
-    // together, so a mid-flight failure leaves the table in its
-    // pre-request state instead of stranding an uncategorized post.
     const insertedId = await db.transaction(async (tx) => {
       const insertResult = await tx
         .insert(postsTable)
@@ -530,11 +666,16 @@ router.post("/posts", requireAuth, requireOwner, async (req: Request, res: Respo
           authorImageUrl: currentUser.image,
           title: (body as { title?: string }).title?.trim() || null,
           content: normalizedContent,
-          // Shadow column for FULLTEXT search; derived from the same
-          // normalized body so search hits the words a reader actually
-          // sees instead of raw HTML tags.
           contentText: computeContentText(normalizedContent, body.contentFormat),
           contentFormat: body.contentFormat,
+          status: postStatus,
+          scheduledAt: postStatus === "scheduled" && body.scheduledAt
+            ? formatMysqlDateTimeUtc(body.scheduledAt as Date)
+            : null,
+          // Store platform IDs for later dispatch if not publishing immediately.
+          pendingPlatformIds: postStatus !== "published" && rawPlatformIds.length > 0
+            ? JSON.stringify(rawPlatformIds)
+            : null,
           createdAt: formatMysqlDateTime(),
         })
         .$returningId();
@@ -553,9 +694,8 @@ router.post("/posts", requireAuth, requireOwner, async (req: Request, res: Respo
 
     const categoriesMap = await hydratePostCategories([insertedId]);
 
-    // Dispatch async syndication after the response is ready.
-    // Non-blocking: errors are logged but do not affect the 201 response.
-    if (rawPlatformIds.length > 0) {
+    // Only syndicate immediately when publishing now.
+    if (postStatus === "published" && rawPlatformIds.length > 0) {
       enqueueSyndication(insertedId, rawPlatformIds, currentUser.id, getOrigin(req), {
         substackSendNewsletter: body.substackSendNewsletter === true,
       });
@@ -563,8 +703,13 @@ router.post("/posts", requireAuth, requireOwner, async (req: Request, res: Respo
 
     return res.status(201).json({
       ...post[0],
+      scheduledAt: toUtcIso(post[0].scheduledAt),
+      pendingPlatformIds: post[0].pendingPlatformIds
+        ? (JSON.parse(post[0].pendingPlatformIds) as number[])
+        : null,
       commentCount: 0,
       categories: categoriesMap.get(insertedId) ?? [],
+      syndications: [],
     });
   } catch (err) {
     return res.status(400).json({ error: "Invalid request" });
@@ -586,6 +731,8 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
         content: postsTable.content,
         contentFormat: postsTable.contentFormat,
         status: postsTable.status,
+        scheduledAt: postsTable.scheduledAt,
+        pendingPlatformIds: postsTable.pendingPlatformIds,
         sourceFeedId: postsTable.sourceFeedId,
         sourceFeedName: feedSourcesTable.name,
         sourceCanonicalUrl: postsTable.sourceCanonicalUrl,
@@ -602,7 +749,7 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
-    if (post.status === "pending") {
+    if (post.status !== "published") {
       const { user } = await loadCurrentUser(req);
       if (!isPostVisibleToReader(post.status, user)) {
         return res.status(404).json({ error: "Post not found" });
@@ -618,7 +765,13 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
     const categoriesMap = await hydratePostCategories([id]);
     const [withSyndication] = await attachSyndications([{ ...post, categories: categoriesMap.get(id) ?? [] }]);
     return res.json({
-      post: withSyndication,
+      post: {
+        ...withSyndication,
+        scheduledAt: toUtcIso((withSyndication as { scheduledAt?: string | null }).scheduledAt),
+        pendingPlatformIds: (withSyndication as { pendingPlatformIds?: string | null }).pendingPlatformIds
+          ? (JSON.parse((withSyndication as { pendingPlatformIds: string }).pendingPlatformIds) as number[])
+          : null,
+      },
       comments,
     });
   } catch (err) {
@@ -626,7 +779,7 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /posts/:id — update owner-authored post
+// PATCH /posts/:id — update owner-authored post (content, categories, and/or status)
 router.patch("/posts/:id", requireAuth, requireOwner, async (req: Request, res: Response) => {
   try {
     const { id } = GetPostParams.parse(req.params);
@@ -642,8 +795,20 @@ router.patch("/posts/:id", requireAuth, requireOwner, async (req: Request, res: 
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    // Strictly validate any supplied categoryIds BEFORE the
-    // transaction so a 400 leaves the post completely unchanged.
+    const currentUser = req.currentUser!;
+    const newStatus = (body as { status?: string }).status as "published" | "draft" | "scheduled" | undefined;
+    const newScheduledAt = (body as { scheduledAt?: Date | null }).scheduledAt;
+
+    // Validate scheduling transitions.
+    if (newStatus === "scheduled") {
+      if (!newScheduledAt) {
+        return res.status(400).json({ error: "scheduledAt is required when transitioning to 'scheduled'" });
+      }
+      if ((newScheduledAt as Date).getTime() < Date.now() + 1_800_000) {
+        return res.status(400).json({ error: "scheduledAt must be at least 30 minutes in the future" });
+      }
+    }
+
     if (Array.isArray(body.categoryIds) && body.categoryIds.length > 0) {
       try {
         await validateCategoryIds(body.categoryIds);
@@ -658,20 +823,58 @@ router.patch("/posts/:id", requireAuth, requireOwner, async (req: Request, res: 
       }
     }
 
-    // Wrap the content update and the category-set replacement in a
-    // single transaction so a mid-flight failure can't leave the post
-    // and its category links in inconsistent states.
+    // Resolve platform IDs for pending storage or immediate dispatch.
+    const rawPlatformIds: number[] | undefined = Array.isArray((body as { platformIds?: unknown }).platformIds)
+      ? ((body as { platformIds: unknown[] }).platformIds as unknown[])
+          .map(Number)
+          .filter((n) => Number.isInteger(n) && n > 0)
+      : undefined;
+
+    const isTransitioningToPublished =
+      newStatus === "published" && post[0].status !== "published";
+
+    // Build the status/scheduling patch object.
+    type StatusPatch = {
+      status?: string;
+      scheduledAt?: string | null;
+      pendingPlatformIds?: string | null;
+    };
+    const statusPatch: StatusPatch = {};
+    if (newStatus) {
+      statusPatch.status = newStatus;
+      if (newStatus === "scheduled" && newScheduledAt) {
+        statusPatch.scheduledAt = formatMysqlDateTimeUtc(newScheduledAt as Date);
+      } else if (newStatus === "published" || newStatus === "draft") {
+        statusPatch.scheduledAt = null;
+      }
+    }
+    if (rawPlatformIds !== undefined) {
+      if (newStatus !== "published" && post[0].status !== "published") {
+        statusPatch.pendingPlatformIds = rawPlatformIds.length > 0
+          ? JSON.stringify(rawPlatformIds)
+          : null;
+      } else if (newStatus !== "published") {
+        statusPatch.pendingPlatformIds = rawPlatformIds.length > 0
+          ? JSON.stringify(rawPlatformIds)
+          : null;
+      }
+    }
+    if (isTransitioningToPublished) {
+      // Clear pendingPlatformIds after dispatching.
+      statusPatch.pendingPlatformIds = null;
+    }
+
+    const titlePatch = (body as { title?: string }).title !== undefined
+      ? { title: (body as { title?: string }).title?.trim() || null }
+      : {};
+
     await db.transaction(async (tx) => {
-      const titlePatch = (body as { title?: string }).title !== undefined
-        ? { title: (body as { title?: string }).title?.trim() || null }
-        : {};
       await tx
         .update(postsTable)
         .set({
           ...titlePatch,
+          ...statusPatch,
           content: normalizedContent,
-          // Recompute the search shadow column in the same statement so
-          // `posts.content` and `posts.content_text` cannot drift.
           contentText: computeContentText(normalizedContent, body.contentFormat),
           contentFormat: body.contentFormat,
         })
@@ -680,6 +883,34 @@ router.patch("/posts/:id", requireAuth, requireOwner, async (req: Request, res: 
         await replacePostCategories(id, body.categoryIds, tx);
       }
     });
+
+    // Fire syndication when transitioning to published (draft→pub or scheduled→pub).
+    if (isTransitioningToPublished) {
+      const platformIds = rawPlatformIds && rawPlatformIds.length > 0
+        ? rawPlatformIds
+        : post[0].pendingPlatformIds
+          ? (JSON.parse(post[0].pendingPlatformIds) as number[])
+          : [];
+      if (platformIds.length > 0) {
+        enqueueSyndication(id, platformIds, currentUser.id, getOrigin(req), {
+          substackSendNewsletter: false,
+        });
+      }
+    }
+
+    // Fire syndication when editing an already-published post with explicit platform IDs.
+    // This matches the OpenAPI spec: "For already-published posts: triggers immediate syndication."
+    if (
+      !isTransitioningToPublished &&
+      post[0].status === "published" &&
+      !newStatus &&
+      rawPlatformIds &&
+      rawPlatformIds.length > 0
+    ) {
+      enqueueSyndication(id, rawPlatformIds, currentUser.id, getOrigin(req), {
+        substackSendNewsletter: false,
+      });
+    }
 
     const updatedPost = await db.select().from(postsTable).where(eq(postsTable.id, id)).limit(1);
     if (!updatedPost[0]) {
@@ -691,11 +922,18 @@ router.patch("/posts/:id", requireAuth, requireOwner, async (req: Request, res: 
       .from(commentsTable)
       .where(eq(commentsTable.postId, id));
     const categoriesMap = await hydratePostCategories([id]);
+    const [withSyndication] = await attachSyndications([{
+      ...updatedPost[0],
+      categories: categoriesMap.get(id) ?? [],
+    }]);
 
     return res.json({
-      ...updatedPost[0],
+      ...withSyndication,
+      scheduledAt: toUtcIso(updatedPost[0].scheduledAt),
       commentCount: commentCountResult[0]?.count ?? 0,
-      categories: categoriesMap.get(id) ?? [],
+      pendingPlatformIds: updatedPost[0].pendingPlatformIds
+        ? (JSON.parse(updatedPost[0].pendingPlatformIds) as number[])
+        : null,
     });
   } catch (err) {
     return res.status(400).json({ error: "Invalid request" });
