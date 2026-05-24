@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useLocation, useRoute } from "wouter";
 import {
+  createFloorClickNavigation,
+  createKeyboardNavigation,
   createPresentationSurface,
   createMountedGalleryShell,
   disposeObjectMaterial,
@@ -11,6 +13,9 @@ import {
   updateMountedGalleryLayout,
 } from "@/lib/immersive-gallery";
 import {
+  buildImageGalleryEmbedHtml,
+  buildImmersiveImageHref,
+  buildPlainImageEmbedHtml,
   readImmersiveImageMetadata,
   resolveImmersiveImageSrc,
 } from "@/lib/immersive-view";
@@ -98,8 +103,13 @@ function ImmersiveImageStage({
       },
     );
 
+    const floorNav = createFloorClickNavigation(shell.camera, shell.controls, shell.floor, stageEl);
+    const keyNav = createKeyboardNavigation(shell.controls);
+
     function animate() {
       frameId = requestAnimationFrame(animate);
+      floorNav.update();
+      keyNav.update();
       if (textureRef) {
         textureRef.needsUpdate = true;
       }
@@ -133,6 +143,8 @@ function ImmersiveImageStage({
       shell.frameMesh.geometry.dispose();
       disposeObjectMaterial(shell.frameMesh.material);
       shell.renderer.dispose();
+      floorNav.dispose();
+      keyNav.dispose();
       stageEl.innerHTML = "";
     };
   }, [fullscreen, imageSrc, onError]);
@@ -151,6 +163,21 @@ export default function ImmersiveImagePage() {
   const imageSrc = useMemo(
     () => (encodedRef ? resolveImmersiveImageSrc(encodedRef) : ""),
     [encodedRef],
+  );
+  const isEmbedMode = searchParams.get("embed") === "1";
+
+  const canonicalHref = useMemo(
+    () => encodedRef ? `${window.location.origin}${buildImmersiveImageHref(imageSrc, metadata)}` : "",
+    [encodedRef, imageSrc, metadata],
+  );
+
+  const plainEmbedCode = useMemo(
+    () => buildPlainImageEmbedHtml(imageSrc, metadata.alt),
+    [imageSrc, metadata.alt],
+  );
+  const galleryEmbedCode = useMemo(
+    () => encodedRef ? buildImageGalleryEmbedHtml(encodedRef, metadata) : "",
+    [encodedRef, metadata],
   );
 
   useEffect(() => {
@@ -173,6 +200,12 @@ export default function ImmersiveImagePage() {
       onBack={goBack}
       isFullscreen={isFullscreen}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
+      isEmbedMode={isEmbedMode}
+      canonicalHref={canonicalHref}
+      embedCodes={encodedRef ? {
+        plain: { label: "Embed Piece", code: plainEmbedCode },
+        gallery: { label: "Embed Interactive", code: galleryEmbedCode },
+      } : undefined}
       metadataCard={
         <ImmersiveMetadataCard
           title={metadata.title || metadata.alt || "Immersive image"}
@@ -181,11 +214,11 @@ export default function ImmersiveImagePage() {
               <>
                 <span className="block">{metadata.caption}</span>
                 <span className="mt-3 block">
-                  This image uses the browser-based non-Three immersive gallery scene with a normalized presentation surface and centered default framing.
+                  This image uses the browser-based 3D immersive gallery scene with a normalized presentation surface and centered default framing.
                 </span>
               </>
             ) : (
-              "This image uses the browser-based non-Three immersive gallery scene with a normalized presentation surface and centered default framing."
+              "This image uses the browser-based 3D immersive gallery scene with a normalized presentation surface and centered default framing."
             )
           }
           fields={[
