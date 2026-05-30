@@ -37,21 +37,21 @@
 
 ## p5
 
-- **Purpose:** Self-hosted runtime for owner-authored interactive art pieces rendered inside app-owned iframe embeds, with generated or manual `p5` instance-mode code preflighted before any draft is shown.
+- **Purpose:** Self-hosted runtime for owner-authored interactive art pieces rendered inside app-owned iframe embeds, immersive piece views, exhibit wall slots, and thumbnail capture, with generated or manual `p5` instance-mode code preflighted before any draft is shown.
 - **Sends data off-domain:** No.
 - **What breaks if it changes or is removed:** Saved interactive `p5` pieces stop rendering and the validated piece-generation pipeline cannot complete its runtime preflight until a compatible local runtime is restored, but stored piece prompts, HTML/CSS/JS code, legacy structured specs, and surrounding post content remain intact.
 - **Self-hosting alternative:** A custom in-repo canvas runtime maintained by the app.
 
 ## c2.js
 
-- **Purpose:** Self-hosted creative-coding runtime for owner-authored 2D interactive pieces, used by the app-owned preview/embed renderer and server-side preflight path.
+- **Purpose:** Self-hosted creative-coding runtime for owner-authored 2D interactive pieces, used by the app-owned preview/embed renderer, immersive piece views, exhibit wall slots, thumbnail capture, and server-side preflight path.
 - **Sends data off-domain:** No.
 - **What breaks if it changes or is removed:** Saved interactive `c2` pieces stop rendering and new `c2` piece drafts cannot be previewed until a compatible local runtime is restored, but stored prompts, HTML/CSS/JS code, legacy structured specs, and post content remain intact.
 - **Self-hosting alternative:** A custom in-repo 2D geometry/canvas runtime maintained by the app.
 
 ## Three.js
 
-- **Purpose:** Self-hosted imperative 3D runtime for owner-authored interactive pieces, used for app-owned 3D preview, embed rendering, and runtime preflight.
+- **Purpose:** Self-hosted imperative 3D runtime for owner-authored interactive pieces, immersive image/piece presentation routes, exhibit wall rendering, embed rendering, thumbnail capture, and runtime preflight.
 - **Sends data off-domain:** No.
 - **What breaks if it changes or is removed:** Saved interactive `three` pieces stop rendering and new `three` drafts cannot be previewed until a compatible local runtime is restored, but stored prompts, HTML/CSS/JS code, legacy structured specs, and post content remain intact.
 - **Self-hosting alternative:** A custom in-repo WebGL scene runtime maintained by the app.
@@ -72,7 +72,7 @@
 
 ## Local Media Library
 
-- **Purpose:** Store uploaded and owner-imported post media in the MySQL-backed `media_assets` library for insertion into rich posts and direct featured-image selection.
+- **Purpose:** Store uploaded and owner-imported post media in the MySQL-backed `media_assets` library for insertion into rich posts, direct featured-image selection, AI alt-text workflows, art-piece thumbnail storage, and exhibit membership.
 - **Sends data off-domain:** Only when the owner imports an image from a URL; the app server fetches that owner-provided remote image once, then stores a local copy.
 - **What breaks if it changes or is removed:** The rich post editor can no longer accept direct media uploads or import remote images into reusable local media until replaced with another storage mechanism.
 - **Self-hosting alternative:** This is already the self-hosted path. The main future alternative is managed object storage.

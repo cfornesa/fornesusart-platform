@@ -1316,3 +1316,90 @@ The home feed utilizes a custom `useInfiniteQuery` with a specific internal key 
 
 ### Outcome
 - The main feed now updates automatically in real-time as content is created or modified, providing a much more intuitive and reactive user experience.
+
+---
+
+## 2026-05-29 — Documentation Recovery Snapshot For Unrecorded Current State
+
+### Trigger
+The owner requested a comprehensive markdown catch-up because multiple implementation changes had landed without corresponding documentation. The chosen approach was a broader audit snapshot: update false/stale markdown and record the current implementation state from recent commits and local working-tree changes, without making new product decisions.
+
+### Scope And Guardrails
+- Documentation-only pass. No code, schema, route, or API behavior changes were made.
+- Current code and recent commits were treated as source of truth.
+- No URL structure change was proposed. Stable feed/export surfaces remain unchanged, especially `GET /export.json`, `GET /feed.xml`, and `GET /feed.json`.
+- Existing unresolved follow-up checkboxes elsewhere in this file were left unresolved unless the current code already answered them.
+
+### Recovered Current State
+
+#### Media Library And Featured Images
+- `/admin/library` is a first-class owner admin page for uploaded/imported media.
+- `media_assets` now stores `title`, `alt_text`, MIME type, local file bytes, and uploaded timestamp.
+- Media details can be edited through `MediaGrid`; title/alt text writes flow through `PATCH /api/media/:fileName`.
+- Media assets can be assigned to exhibits via `media_asset_exhibits`.
+- `FeaturedImagePicker` supports upload, URL import, title/alt editing, AI alt-text generation, and final featured-image selection.
+- Rich post editing now tracks `featuredImageUrl`; the first inserted content image can become the featured image automatically until the owner manually selects one.
+
+#### Social Syndication And Post Draft Metadata
+- `posts.featured_image_url` and `posts.social_post_drafts` are part of the current schema.
+- Social draft JSON currently covers `bluesky`, `linkedin`, `facebook`, and `instagram`.
+- Bluesky publishing uses handle + App Password connection flow and publishes AT Protocol external cards.
+- LinkedIn publishing uses OAuth and the Posts API with article source metadata and optional thumbnail upload.
+- Facebook publishing uses Meta Graph API Page feed posts.
+- Instagram publishing uses Meta's two-step media container + publish flow and requires a featured image URL.
+- Social adapters use the owner-authored platform draft when present and fall back to generated canonical-link text.
+- Article-style adapters still append the visible source line. Social targets use platform-native link-card/caption behavior.
+
+#### AI Vendors And Task Preferences
+- Current vendor IDs are `openrouter`, `opencode-zen`, `opencode-go`, `google`, `mistral`, `mistral-vibe`, and `deepseek`.
+- Text generation allows all seven configured vendors.
+- Image description/alt text allows OpenRouter, OpenCode Zen, OpenCode Go, Google, Mistral AI, and Mistral Vibe. DeepSeek is intentionally excluded until image-input support is verified.
+- Piece generation allows Google, Mistral AI, Mistral Vibe, and DeepSeek.
+- `/admin/ai` persists preferred vendors separately for text improvement, alt text, and art-piece generation on the user row.
+- DeepSeek defaults to `deepseek-v4-flash`; Mistral Vibe's known-good model is `mistral-vibe-cli-latest`.
+- Provider timeout is currently 120 seconds in `ai-providers.ts`; docs that still said one minute were updated.
+
+#### Interactive Piece Runtime
+- Supported persisted engines remain `p5`, `c2`, and `three`; A-Frame remains rolled back.
+- Current piece versions store explicit `html_code`, `css_code`, and `generated_code`; `structured_spec` is nullable legacy data.
+- AI piece generation now expects mandatory Markdown code blocks for html/css/js and runs bounded repair/validation before surfacing a draft.
+- `/embed/pieces/:id` resolves the art piece's `current_version_id` by default; `?version=` still explicitly renders a selected version.
+- Unpinned piece embeds are intentionally live-current, so saving a new current version in `/admin/pieces` updates existing embeds.
+- Piece thumbnails are captured client-side from the runtime canvas and uploaded as media assets, then stored on `art_pieces.thumbnail_url`.
+- Thumbnail URLs are accepted when they are app media paths (`/api/media/...`) or absolute HTTP(S) URLs.
+
+#### Immersive Routes
+- Public immersive routes exist for:
+  - `/immersive/images/:encodedRef`
+  - `/immersive/pieces/:id`
+  - `/immersive/exhibits/:slug`
+- `PostContent` augments rendered rich HTML with immersive triggers for images, piece iframes, and exhibit iframes.
+- Immersive pages expose copyable plain/gallery embed code where applicable.
+- `ImmersiveRouteShell` now handles route fullscreen and iframe embed fullscreen separately, locks document scroll/touch behavior, syncs `visualViewport` dimensions into CSS variables, and exits fullscreen state when the browser exits fullscreen.
+- Camera fitting for mounted gallery images, mounted gallery pieces, and exhibit walls now preserves the user's camera target on resize instead of recentering every time.
+
+#### Exhibits
+- Exhibits are implemented as owner-curated collections of art pieces and media images.
+- Schema tables:
+  - `exhibits`
+  - `piece_exhibits`
+  - `media_asset_exhibits`
+- `exhibits` stores `slug`, `name`, `description`, `artist_statement`, `biography`, `rows`, and `cols`.
+- Public API routes include `GET /api/exhibits`, `GET /api/exhibits/:slug`, and `GET /api/exhibits/:slug/items`.
+- Owner API routes create, update, and delete exhibits, plus replace memberships for art pieces and media assets.
+- `/admin/exhibits` manages exhibit metadata and grid sizing. The UI warns that changing an exhibit slug breaks links to `/immersive/exhibits/:slug`.
+- `/admin/pieces` and `/admin/library` both expose exhibit membership assignment.
+- `ExhibitLibraryDialog` lets rich posts insert a saved exhibit iframe.
+- Exhibit walls use Three.js multi-frame layout. Interactive piece slots are progressively activated near the camera target and frozen to snapshots off-target; static/embed modes use a smaller live budget.
+
+### Markdown Updated
+- `README.md`: corrected current feature list, AI vendors, social platforms, interactive piece live-current behavior, media library, exhibits, immersive routes, and admin pages.
+- `replit.md`: added operational notes for live piece embeds, immersive fullscreen behavior, media library, exhibits, immersive routes, social syndication, and current AI vendor allowlists.
+- `docs/auth-setup.md`: added LinkedIn and Meta callback URLs and updated expected post-owner behavior.
+- `docs/db-cleanup-report.md`: updated historical warning to include current live tables and fixed stale repository paths.
+- `docs/dependencies.md`: expanded self-hosted runtime/media dependency descriptions for immersive views, thumbnails, and exhibits.
+- `MEMORY.md`: added recovery entries for media, syndication, AI, immersive routes, exhibits, and live-current piece embeds.
+
+### Follow-Up
+- Review whether `/immersive/exhibits/:slug` should be formally treated as an irreversible public URL surface in future planning. Current implementation already warns in the admin UI that changing an exhibit slug breaks external links.
+- Keep `docs/ai-vendor-verification.md` as the gate before describing any AI vendor/model as production-verified.

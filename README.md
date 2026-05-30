@@ -15,13 +15,14 @@ This repository is a TypeScript monorepo with three main layers:
 At a high level, the app provides:
 
 - owner-only post publishing and editing with a rich WYSIWYG editor
-- POSSE outbound syndication to WordPress.com, self-hosted WordPress, Blogger, and Substack, with per-post syndication badges on post cards
+- POSSE outbound syndication to WordPress.com, self-hosted WordPress, Blogger, Substack, Bluesky, LinkedIn, Facebook, and Instagram, with per-post syndication badges on post cards
 - inbound feed aggregation (PESOS) — subscribe to external RSS/Atom feeds, import posts for review, and publish a profile page for each subscribed blog
 - authenticated member comments and reactions
 - owner-managed post categories with public archive pages and search filtering
 - owner-managed external navigation links and a sitewide footer surfacing the owner's social profiles
 - standardized public feeds (Atom, JSON Feed, mf2-JSON) and per-category/per-page feed variants
-- AI-assisted post rewriting and validated interactive piece generation — p5, Three.js, and C2.js (optional, owner-configured) via OpenRouter, OpenCode Zen, OpenCode Go, or Google Gemini
+- AI-assisted post rewriting, image alt text, and validated interactive piece generation — p5, Three.js, and C2.js (optional, owner-configured) via OpenRouter, OpenCode Zen, OpenCode Go, Google Gemini, Mistral AI, Mistral Vibe, or DeepSeek depending on the task
+- reusable interactive art pieces, immersive image/piece routes, and curated exhibit walls made from pieces and uploaded images
 - a single canonical MySQL database shared by local and deployed app instances
 
 ## Product
@@ -46,10 +47,13 @@ Rich posts support:
 - formatting through a compact WYSIWYG-style toolbar with square controls
 - heading levels `H1` through `H6`
 - local image uploads
+- direct featured-image selection from the media library, with automatic first-image fallback until the owner chooses one manually
 - direct YouTube URL insertion that converts a watch/share link into an embedded video
 - owner-trusted `https:` iframe embeds
+- saved art-piece and exhibit embeds from editor library dialogs
 - optional AI-assisted rewrite from the composer and edit flow, once the owner configures vendors in `/admin/ai`
 - optional AI-assisted piece generation (p5, Three.js, or C2.js) from the composer and edit flow, with a validated preview before any piece can be saved or embedded
+- per-platform social post drafts for Bluesky, LinkedIn, Facebook, and Instagram
 
 HTML is sanitized on the server before storage. The frontend renders rich content after that sanitization step.
 
@@ -59,14 +63,25 @@ The owner can generate reusable interactive pieces and embed them into posts thr
 
 Key behavior:
 
-- generated pieces are produced from a structured spec interpreted per engine — not raw AI-authored JavaScript
-- the API compiles that spec into engine-specific code and runs a server-side preflight before any draft is shown
+- generated pieces are requested as mandatory HTML/CSS/JS code blocks and run through bounded validation/repair before any draft is shown
+- legacy structured specs can still be read, but current saved versions store explicit HTML, CSS, and generated JS source
 - the UI only opens a draft preview after the draft has been validated
 - saving a piece to the library or adding a new version consumes a one-time validated draft token, so arbitrary client-submitted code is not accepted
-- saved embeds are version-pinned, so older posts keep rendering the version they originally inserted
+- saved embeds resolve the current piece version by default, so admin edits update posts that embed that piece
+- optional `?version=` remains supported by the embed route for explicit version rendering
+- piece thumbnails are captured client-side from the validated runtime and stored in the media library as `/api/media/...` assets
 - iframe embeds at `/embed/pieces/:id` serve the correct runtime library for the piece's engine via `/api/runtimes/`
+- fullscreen immersive routes are available at `/immersive/pieces/:id` and `/immersive/images/:encodedRef`; rendered post content adds immersive triggers for images, piece embeds, and exhibit embeds
 
 The owner can manage reusable pieces from `/admin/pieces`, regenerate versions, archive pieces, copy an iframe embed code to clipboard, and reinsert existing embeds from the composer library picker.
+
+### Media Library And Exhibits
+
+The image library at `/admin/library` stores uploaded or URL-imported images in MySQL-backed media assets. Each image can have a title, alt text, and exhibit memberships. Vision-capable AI vendors can generate alt text when configured in `/admin/ai`; DeepSeek is intentionally not offered for image alt text until image-input support is verified.
+
+The owner can create named exhibits at `/admin/exhibits`. Exhibits are owner-curated collections of art pieces and media-library images with a stable slug, description, artist statement, biography, and configurable grid size. The public immersive wall route is `/immersive/exhibits/:slug`; rich posts can insert a saved exhibit as an iframe embed, and the embed points visitors through to the full interactive exhibit.
+
+The exhibit wall is a Three.js museum-style scene. It progressively runs only a small number of nearby interactive pieces live, freezes off-target pieces into canvas snapshots, and uses saved thumbnails or "preview unavailable" placeholders so large exhibits remain responsive.
 
 ### Outbound Syndication (POSSE)
 
@@ -78,14 +93,18 @@ The owner can cross-post to external platforms from the post composer. Supported
 | WordPress (self-hosted) | Application password |
 | Blogger | Google OAuth 2.0 (CLIENT_ID + CLIENT_SECRET stored in DB) |
 | Substack | Session cookie + publication ID (stored encrypted in DB) |
+| Bluesky | Handle + App Password |
+| LinkedIn | OAuth 2.0 with `w_member_social`, `openid`, `profile`, and `email` |
+| Facebook | Meta OAuth 2.0, publishing to a managed Page |
+| Instagram | Meta OAuth 2.0, publishing through a linked Instagram Business/Creator account |
 
 > Medium's backend adapter remains in the codebase for existing connections, but the platform is not offered as a new connection option in the admin UI due to API access restrictions.
 
-OAuth app credentials (CLIENT_ID + CLIENT_SECRET) are stored encrypted in the database via `/admin/platforms` — no server-side environment variable required. The encryption key is `AI_SETTINGS_ENCRYPTION_KEY`.
+OAuth app credentials (CLIENT_ID + CLIENT_SECRET) are stored encrypted in the database via `/admin/platforms` — no server-side environment variable required. The encryption key is `AI_SETTINGS_ENCRYPTION_KEY`. WordPress.com and Blogger store an optional blog URL to scope the connection to the intended site.
 
-Every outbound share from a post authored on this application appends a reader-visible canonical source line to the syndicated copy in the form `Original source at {Site Title}: {Canonical URL}`. Where a target also supports native canonical/source metadata, the app sends that too.
+Every outbound share from a post authored on this application keeps the canonical URL attached. Article-style targets append a reader-visible source line in the form `Original source at {Site Title}: {Canonical URL}`. Social targets use native link-card or caption behavior and can use the owner's per-platform social draft.
 
-After a post is cross-posted successfully, its card on the home feed shows platform badges ("Also on Medium", "Also on WordPress.com", etc.) linking to the syndicated copy.
+After a post is cross-posted successfully, its card on the home feed shows platform badges linking to the syndicated copy.
 
 ### Inbound Feed Aggregation (PESOS)
 
@@ -142,8 +161,11 @@ Configured per vendor from `/admin/ai`. Supported vendors:
 - OpenCode Zen
 - OpenCode Go
 - Google Gemini
+- Mistral AI
+- Mistral Vibe
+- DeepSeek
 
-AI is owner-only and disabled per vendor by default. Saved API keys are encrypted at rest using `AI_SETTINGS_ENCRYPTION_KEY`. The same saved vendor credentials power both text rewriting and validated piece generation (p5, Three.js, and C2.js). Piece generation is cancellable, bounded by a one-minute server timeout, and surfaces attempts used during generation and repair. See [docs/ai-vendor-verification.md](./docs/ai-vendor-verification.md) before treating any vendor as production-ready.
+AI is owner-only and disabled per vendor by default. Saved API keys are encrypted at rest using `AI_SETTINGS_ENCRYPTION_KEY`. Task preferences let the owner choose separate preferred vendors for text improvement, image alt text, and art-piece generation. Text improvement currently allows all vendors; image alt text allows OpenRouter, OpenCode Zen, OpenCode Go, Google, Mistral AI, and Mistral Vibe; art-piece generation allows Google, Mistral AI, Mistral Vibe, and DeepSeek. Piece generation is cancellable, bounded by a two-minute provider timeout, and surfaces attempts used during generation and repair. See [docs/ai-vendor-verification.md](./docs/ai-vendor-verification.md) before treating any vendor as production-ready.
 
 ### Admin Pages
 
@@ -153,8 +175,10 @@ AI is owner-only and disabled per vendor by default. Saved API keys are encrypte
 | `/admin/categories` | Create and manage post categories |
 | `/admin/platforms` | Connect and configure outbound syndication platforms |
 | `/admin/feeds` | Manage inbound feed subscriptions; set username, bio, and site URL for each source's profile page |
-| `/admin/ai` | Configure AI writing assistant vendors |
-| `/admin/pieces` | Manage reusable p5, Three.js, and C2.js pieces, regenerate versions, and copy iframe embed codes |
+| `/admin/ai` | Configure AI vendors and task-specific preferences |
+| `/admin/library` | Manage uploaded/imported images, titles, alt text, and exhibit memberships |
+| `/admin/pieces` | Manage reusable p5, Three.js, and C2.js pieces, regenerate versions, capture thumbnails, assign exhibits, and copy iframe embed codes |
+| `/admin/exhibits` | Create and manage curated exhibit walls |
 | `/admin/pages` | Create and manage static pages |
 | `/settings` | Site customization (theme, palette, colors, site copy) |
 

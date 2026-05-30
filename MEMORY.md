@@ -95,7 +95,7 @@ or rejection. -->
 2026-05-04 · AI · Opt-in AI writing assistance is now per-user, disabled by default, and gated by saved vendor/model/key configuration before any AI action should appear in the UI.
     [Confirmed by the human during the AI assistant implementation session and verified from the new `/api/users/me/ai-settings` + `/api/ai/process` backend contract.]
 
-2026-05-04 · AI · Backend AI vendor identifiers use the stable slug set `mistral`, `opencode-zen`, `opencode-go`, `chatgpt`, `claude`, and `google`, while human-readable labels are exposed for frontend display.
+2026-05-04 · AI · Historical note: backend AI vendor identifiers initially used `mistral`, `opencode-zen`, `opencode-go`, `chatgpt`, `claude`, and `google`; this set is superseded by the current 2026-05-29 vendor set below.
     [Confirmed by the human during the AI assistant implementation session and verified from the new AI settings utilities, OpenAPI schema, and generated client types.]
 
 2026-05-05 · AI · AI provider failures are now classified explicitly as `timeout`, `upstream_http`, `parse`, `network`, or `unknown_model`, with structured safe logging that includes vendor, model, transport kind, endpoint family, URL, and real upstream status when available.
@@ -104,7 +104,7 @@ or rejection. -->
 2026-05-05 · AI UX · The composer AI failure path now reads generated `ApiError` payloads instead of assuming Axios-style errors, preserves the current draft on failure, and shows a user-friendly timeout message when the provider takes too long.
     [Confirmed by the human during the AI hardening session and verified from `RichPostEditor.tsx`, `ai-error.ts`, and the focused editor test coverage.]
 
-2026-05-05 · AI SETTINGS · AI configuration is now owner-only and managed from `/admin/ai`, with one saved model slug and one encrypted API key per supported vendor row in `user_ai_vendor_settings`. The supported vendor set is now hard-restricted to `kilo-gateway`, `opencode-zen`, `opencode-go`, and `google`.
+2026-05-05 · AI SETTINGS · AI configuration is owner-only and managed from `/admin/ai`, with one saved model slug and one encrypted API key per supported vendor row in `user_ai_vendor_settings`. Historical note: the temporary supported set `kilo-gateway`, `opencode-zen`, `opencode-go`, and `google` is superseded by the current 2026-05-29 vendor set below.
     [Confirmed by the human during the Phase 4 AI settings rework and verified from the new schema, AI routes, OpenAPI contract, and Admin AI page.]
 
 2026-05-05 · AI EDITOR · The owner post composer and owner post-edit flows now expose an AI vendor dropdown plus the `AI` button, and each request explicitly selects a configured vendor while using that vendor’s saved model/key from Admin settings.
@@ -135,7 +135,7 @@ or rejection. -->
     [Confirmed by the owner during the 2026-05-10 interactive-piece rollback session; implementation recorded in DECISIONS.md and docs/dependencies.md.]
     [Implemented 2026-05-10; verified from `artifacts/api-server/src/lib/art-pieces.ts`, `lib/db/src/migrate.ts`, and the updated composer/admin UI flow.]
 
-2026-05-09 · INTERACTIVE PIECES · Piece generation is bounded and transparent: the UI shows an Attempts counter, generation can be stopped manually, the API enforces a one-minute timeout and bounded repair loop, and failed/timed-out runs do not create saved pieces.
+2026-05-09 · INTERACTIVE PIECES · Piece generation is bounded and transparent: the UI shows an Attempts counter, generation can be stopped manually, the API enforces a bounded repair loop, and failed/timed-out runs do not create saved pieces. Historical note: the earlier one-minute timeout was later increased; current provider timeout is 120 seconds.
     [Implemented 2026-05-09; verified from the validated draft response contract, generation dialog UI, and focused backend/frontend tests.]
 
 2026-05-09 · INTERACTIVE PIECES · Saving a new piece or new piece version now requires a one-time validated draft token issued by `/api/art-pieces/generate`; `POST /art-pieces` and `POST /art-pieces/:id/versions` no longer trust browser-submitted sketch code directly.
@@ -155,3 +155,21 @@ or rejection. -->
 
 2026-05-14 · ADMIN UX · `/admin/posts` is a new owner-only page showing a weekly calendar grid plus a horizontal drafts strip. The `PostEditor` component wraps `RichPostEditor` with three modes (publish / draft / schedule) and a `DayPicker` for date selection. The `view=owner` query param on `GET /posts` returns all statuses (published, scheduled, draft, imported) filtered by a `from`/`to` date range (keyed on `scheduledAt` for scheduled posts, `createdAt` otherwise). GitHub Actions workflow `.github/workflows/feed-refresh.yml` runs hourly to hit `POST /api/feed-sources/refresh`; requires `CRON_SECRET` and `PUBLIC_SITE_URL` as GitHub Actions secrets.
     [Verified from `artifacts/microblog/src/pages/admin-posts.tsx`, `artifacts/microblog/src/components/post/PostEditor.tsx`, `artifacts/api-server/src/routes/posts.ts`, and `.github/workflows/feed-refresh.yml`.]
+
+2026-05-29 · MEDIA · The media library is now a first-class admin surface at `/admin/library`. Uploaded and URL-imported images are stored in `media_assets` with local bytes, title, alt text, and exhibit memberships; the editor can select featured images from this library, auto-select the first content image until the owner manually chooses one, and use configured vision-capable AI vendors for alt text.
+    [Documentation recovery entry; verified from `media_assets` schema, `routes/media.ts`, `FeaturedImagePicker.tsx`, `MediaGrid.tsx`, and `admin-library.tsx`.]
+
+2026-05-29 · SYNDICATION · Outbound syndication now includes social targets beyond the article-style adapters: Bluesky via handle + App Password, LinkedIn via OAuth, and Facebook/Instagram via a shared Meta OAuth flow. Posts can store `featured_image_url` and JSON `social_post_drafts` for Bluesky, LinkedIn, Facebook, and Instagram; social adapters use those drafts when present and otherwise generate canonical-link text.
+    [Documentation recovery entry; verified from `posts.ts`, `platform-oauth.ts`, `admin-platforms.tsx`, and `lib/syndication/{bluesky,linkedin,facebook,instagram,content}.ts`.]
+
+2026-05-29 · AI · Current owner AI vendor IDs are `openrouter`, `opencode-zen`, `opencode-go`, `google`, `mistral`, `mistral-vibe`, and `deepseek`. Task-specific allowlists are enforced: text improvement allows all seven; image alt text excludes DeepSeek; art-piece generation is limited to Google, Mistral AI, Mistral Vibe, and DeepSeek. Mistral Vibe's known-good model is `mistral-vibe-cli-latest`; DeepSeek defaults to `deepseek-v4-flash`.
+    [Documentation recovery entry; verified from `ai-settings.ts`, `use-owner-ai-vendors.ts`, `admin-ai.tsx`, `ai-providers.ts`, and `docs/ai-vendor-verification.md`.]
+
+2026-05-29 · IMMERSIVE · Images and art pieces now have public immersive 3D presentation routes (`/immersive/images/:encodedRef`, `/immersive/pieces/:id`) with copyable plain/gallery embed codes. Rendered rich post content adds immersive triggers for images, `/embed/pieces/:id` iframes, and exhibit iframes; fullscreen mode locks page scroll/touch behavior and preserves camera target across resize.
+    [Documentation recovery entry; verified from `ImmersiveRouteShell.tsx`, `immersive-view.ts`, `immersive-image.tsx`, `immersive-piece.tsx`, `PostContent.tsx`, and the current uncommitted immersive shell changes.]
+
+2026-05-29 · EXHIBITS · Exhibits are live as owner-curated collections of art pieces and media images. Schema tables are `exhibits`, `piece_exhibits`, and `media_asset_exhibits`; public reads include `/api/exhibits`, `/api/exhibits/:slug`, and `/api/exhibits/:slug/items`; owner writes manage exhibit rows and memberships for pieces/images. The public wall route is `/immersive/exhibits/:slug`, and rich posts can insert saved exhibit embeds.
+    [Documentation recovery entry; verified from `lib/db/src/schema/exhibits.ts`, `routes/exhibits.ts`, `ExhibitsManagementCard.tsx`, `ExhibitLibraryDialog.tsx`, and `immersive-exhibit-wall.tsx`.]
+
+2026-05-29 · INTERACTIVE PIECES · Piece embeds are live-current by default: `/embed/pieces/:id` resolves the art piece's current version unless an explicit `?version=` query is supplied. Admin piece edits therefore update existing unpinned embeds. Piece thumbnails are captured client-side from the validated runtime and saved through the media upload route, then stored as `art_pieces.thumbnail_url`.
+    [Documentation recovery entry; verified from `piece-embed-html.ts`, `RichPostEditor.tsx`, `admin-pieces.tsx`, `art-piece-thumbnail.ts`, `art-piece-thumbnail-url.ts`, and `art_pieces.thumbnail_url`.]
