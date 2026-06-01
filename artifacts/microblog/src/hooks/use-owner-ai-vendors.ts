@@ -22,7 +22,7 @@ const IMAGE_DESCRIPTION_VENDORS = [
   "mistral",
   "mistral-vibe",
 ] as const;
-const PIECE_GENERATION_VENDORS = ["google", "mistral", "mistral-vibe", "deepseek"] as const;
+const PIECE_GENERATION_VENDORS = ["opencode-zen", "opencode-go", "google", "mistral", "mistral-vibe", "deepseek"] as const;
 
 function filterVendors(
   vendors: Array<{ id: ProcessAiTextBodyVendor; label: string }>,
