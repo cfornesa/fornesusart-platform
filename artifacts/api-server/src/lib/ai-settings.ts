@@ -34,7 +34,7 @@ export const IMAGE_DESCRIPTION_VENDORS = [
 ] as const;
 export type ImageDescriptionVendor = (typeof IMAGE_DESCRIPTION_VENDORS)[number];
 
-export const PIECE_GENERATION_VENDORS = ["google", "mistral", "mistral-vibe", "deepseek"] as const;
+export const PIECE_GENERATION_VENDORS = ["opencode-zen", "opencode-go", "google", "mistral", "mistral-vibe", "deepseek"] as const;
 export type PieceGenerationVendor = (typeof PIECE_GENERATION_VENDORS)[number];
 
 export function isTextGenerationVendor(vendor: string): vendor is TextGenerationVendor {
