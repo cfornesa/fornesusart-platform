@@ -11,8 +11,8 @@ or rejection. -->
 2026-04-28 · ROLES · The initial local capability model is `owner` plus `member`, with owner bootstrap handled by manual promotion after the owner's first successful login.
     [Verified from CONSTRAINTS.md and docs/auth-setup.md.]
 
-2026-04-28 · DEV SETUP · Local development expects separate frontend and backend processes, with the frontend on `http://localhost:3000`, the backend on `http://localhost:8080`, and frontend proxying for `/api/*` and `/auth/*`.
-    [Verified from docs/auth-setup.md and DECISIONS.md.]
+2026-04-28 · DEV SETUP · `npm run dev` runs a single-port dev server on `PORT=4000` (local default; macOS AirPlay Receiver occupies 5000). `npm run dev:hot` runs Vite on port 3000 with proxy to the API port. Auth callbacks are registered against the API port (e.g. `http://localhost:4000/api/auth/callback/github`).
+    [Updated: original localhost:3000/8080 two-process setup was superseded; verified from docs/auth-setup.md and DECISIONS.md "2026-05-06 — Local Port Change to 4000".]
 
 2026-04-28 · STACK · The current repo is an npm workspaces TypeScript monorepo with an Express 5 API, a React 19 + Vite frontend, and MySQL via Drizzle ORM.
     [Verified from package.json and DECISIONS.md.]
@@ -104,8 +104,8 @@ or rejection. -->
 2026-05-05 · AI UX · The composer AI failure path now reads generated `ApiError` payloads instead of assuming Axios-style errors, preserves the current draft on failure, and shows a user-friendly timeout message when the provider takes too long.
     [Confirmed by the human during the AI hardening session and verified from `RichPostEditor.tsx`, `ai-error.ts`, and the focused editor test coverage.]
 
-2026-05-05 · AI SETTINGS · AI configuration is owner-only and managed from `/admin/ai`, with one saved model slug and one encrypted API key per supported vendor row in `user_ai_vendor_settings`. Historical note: the temporary supported set `kilo-gateway`, `opencode-zen`, `opencode-go`, and `google` is superseded by the current 2026-05-29 vendor set below.
-    [Confirmed by the human during the Phase 4 AI settings rework and verified from the new schema, AI routes, OpenAPI contract, and Admin AI page.]
+2026-05-05 · AI SETTINGS · AI configuration is owner-only and managed from `/admin/ai`. The schema now has two tables: `user_ai_vendor_settings` (one row per vendor profile, with `profileName` allowing multiple named profiles per vendor, plus `enabled`, `model`, `endpointKind`) and `user_ai_vendor_keys` (one encrypted API key per vendor, shared across all profiles for that vendor). Historical note: early supported sets (`kilo-gateway`, then `chatgpt`/`claude`) are superseded by the current 2026-05-29 vendor set below.
+    [Updated to reflect named-profile + separate-keys schema refactor; verified from `lib/db/src/schema/user-ai-settings.ts`.]
 
 2026-05-05 · AI EDITOR · The owner post composer and owner post-edit flows now expose an AI vendor dropdown plus the `AI` button, and each request explicitly selects a configured vendor while using that vendor’s saved model/key from Admin settings.
     [Confirmed by the human during the Phase 4 AI editor rework and verified from `ComposePost.tsx`, `PostCard.tsx`, `admin-pending.tsx`, `RichPostEditor.tsx`, and focused frontend tests.]
@@ -131,9 +131,8 @@ or rejection. -->
 2026-05-09 · INTERACTIVE PIECES · AI-generated interactive pieces no longer accept raw model-authored JavaScript as a trusted draft surface. The owner-facing generation flow now asks the model for a structured sketch spec, compiles that spec into app-owned `p5` code, and only surfaces a draft after server-side syntax and runtime preflight validation succeed.
     [Implemented 2026-05-09; verified from `artifacts/api-server/src/lib/art-pieces.ts`, `routes/art-pieces.ts`, and the updated composer/admin UI flow.]
 
-2026-05-10 · INTERACTIVE PIECES · The supported AI-generated interactive-piece engines are now `p5`, `c2`, and `three`. A-Frame was explicitly rolled back from the product: it is no longer a valid saved/API engine, no longer appears in owner generation UIs, and existing A-Frame content is intentionally not supported.
-    [Confirmed by the owner during the 2026-05-10 interactive-piece rollback session; implementation recorded in DECISIONS.md and docs/dependencies.md.]
-    [Implemented 2026-05-10; verified from `artifacts/api-server/src/lib/art-pieces.ts`, `lib/db/src/migrate.ts`, and the updated composer/admin UI flow.]
+2026-05-10 · INTERACTIVE PIECES · The supported AI-generated interactive-piece engines are `p5`, `c2`, `three`, and `svg`. A-Frame was explicitly rolled back and remains unsupported. SVG pieces use CSS `@keyframes` animations on actual SVG elements plus an optional `window.sketch` JS function; the runtime provides `window.svgRoot` pointing to the SVG root.
+    [Updated: SVG added as 4th engine post-A-Frame rollback. Verified from `lib/db/src/schema/art-pieces.ts` artPieceEngineSchema and `artifacts/api-server/src/lib/art-pieces.ts` ENGINE_ADAPTERS.svg.]
 
 2026-05-09 · INTERACTIVE PIECES · Piece generation is bounded and transparent: the UI shows an Attempts counter, generation can be stopped manually, the API enforces a bounded repair loop, and failed/timed-out runs do not create saved pieces. Historical note: the earlier one-minute timeout was later increased; current provider timeout is 120 seconds.
     [Implemented 2026-05-09; verified from the validated draft response contract, generation dialog UI, and focused backend/frontend tests.]
@@ -173,3 +172,6 @@ or rejection. -->
 
 2026-05-29 · INTERACTIVE PIECES · Piece embeds are live-current by default: `/embed/pieces/:id` resolves the art piece's current version unless an explicit `?version=` query is supplied. Admin piece edits therefore update existing unpinned embeds. Piece thumbnails are captured client-side from the validated runtime and saved through the media upload route, then stored as `art_pieces.thumbnail_url`.
     [Documentation recovery entry; verified from `piece-embed-html.ts`, `RichPostEditor.tsx`, `admin-pieces.tsx`, `art-piece-thumbnail.ts`, `art-piece-thumbnail-url.ts`, and `art_pieces.thumbnail_url`.]
+
+2026-06-05 · ADMIN UX · Recycle bin is live at `/admin/recycle-bin`. Soft-deleted posts, pieces, media assets, exhibits, pages, and categories are surfaced there for restore or permanent deletion. All six types support individual restore, individual permanent delete, and bulk permanent delete via a shared `DELETE /api/recycle-bin` endpoint. No new DB tables — relies on existing `deleted_at` soft-delete columns on each resource table.
+    [Verified from `artifacts/api-server/src/routes/recycle-bin.ts` and `artifacts/microblog/src/pages/admin/admin-recycle-bin.tsx`.]

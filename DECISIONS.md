@@ -1403,3 +1403,51 @@ The owner requested a comprehensive markdown catch-up because multiple implement
 ### Follow-Up
 - Review whether `/immersive/exhibits/:slug` should be formally treated as an irreversible public URL surface in future planning. Current implementation already warns in the admin UI that changing an exhibit slug breaks external links.
 - Keep `docs/ai-vendor-verification.md` as the gate before describing any AI vendor/model as production-verified.
+
+---
+
+## 2026-06-05 — SVG Interactive Piece Engine, Recycle Bin, And AI Vendor Settings Profiles
+
+### SVG As Fourth Interactive Piece Engine
+
+#### Decisions Confirmed
+- The persisted art-piece engine contract is expanded from `p5 | c2 | three` to `p5 | c2 | three | svg`. This is an intentional irreversible expansion of the saved API/database surface.
+- SVG pieces are animated SVG art documents. The generation contract is: HTML block contains a `<svg>` root with all static shapes and groups; CSS block must include `@keyframes` animations targeting actual SVG elements; JS block implements dynamic spawning via `window.sketch()` using `document.createElementNS` exclusively.
+- The runtime provides `window.svgRoot` pointing to the SVG root element. `document.createElement`, `fetch`, `import`, and canvas APIs are forbidden in SVG pieces.
+- `window.sketch` is optional for SVG (CSS `@keyframes` alone can drive a valid animated piece). If `window.sketch` is defined, it must be a function.
+- SVG engine adapter uses `structuredP5ArtPieceSpecSchema` as a placeholder schema — SVG generation uses Markdown code blocks, not structured spec, consistent with the post-2026-05-10 generation pipeline for all engines.
+
+#### Persisted Enum Values (Irreversible)
+Full set after this expansion: `"p5"`, `"c2"`, `"three"`, `"svg"`.
+
+---
+
+### Recycle Bin
+
+#### Decisions Confirmed
+- A soft-delete recycle bin is live at `GET /api/recycle-bin`, accessible from `/admin/recycle-bin`.
+- Covered resource types: posts, art pieces, media assets, exhibits, pages, categories.
+- Soft deletion uses the existing `deleted_at` column on each resource table — no new tables were created.
+- Per-resource restore endpoints: `POST /recycle-bin/{type}/{id}/restore`.
+- Per-resource permanent delete endpoints: `DELETE /recycle-bin/{type}/{id}`.
+- Bulk permanent delete: `DELETE /recycle-bin` with a body listing IDs per type.
+- All recycle bin endpoints are owner-only.
+
+---
+
+### AI Vendor Settings — Named Profiles + Separate Keys Table
+
+#### Decisions Confirmed
+- `user_ai_vendor_settings` now supports multiple **named profiles per vendor** via a `profile_name VARCHAR(128)` column (default `"Default"`). The unique constraint is now `(user_id, vendor, profile_name)` rather than `(user_id, vendor)`.
+- Encrypted API keys were separated into a new `user_ai_vendor_keys` table with a unique constraint on `(user_id, vendor)`. One key is shared across all profiles for the same vendor.
+- The API layer uses `profiles` and `deletedProfileIds` for settings write, and `profiles` (with per-profile metadata but no raw key material) for settings read.
+- `UpdateMyAiSettingsBody.vendorKeys` and `MyAiSettings.vendorKeys` were removed from the API contract. Any code referencing these old fields is stale and must be updated.
+- The `PATCH /api/users/me/ai-settings` route resolves apiKeys from `parsed.data.profiles[].apiKey` (not a top-level `vendorKeys` array).
+
+#### Persisted Enum Values (Irreversible — `user_ai_vendor_settings.vendor`)
+Unchanged: `"openrouter"`, `"opencode-zen"`, `"opencode-go"`, `"google"`, `"mistral"`, `"mistral-vibe"`, `"deepseek"`.
+
+#### Outcome
+- Multiple AI profiles per vendor are now supported (e.g. separate profiles for different model tiers on the same vendor).
+- API keys remain vendor-scoped (one key per vendor, applied to all profiles for that vendor).
+- Old code using `vendorKeys` on request/response bodies will fail type-checking and must use `profiles` instead.

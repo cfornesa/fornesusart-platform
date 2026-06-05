@@ -21,7 +21,7 @@ At a high level, the app provides:
 - owner-managed post categories with public archive pages and search filtering
 - owner-managed external navigation links and a sitewide footer surfacing the owner's social profiles
 - standardized public feeds (Atom, JSON Feed, mf2-JSON) and per-category/per-page feed variants
-- AI-assisted post rewriting, image alt text, and validated interactive piece generation — p5, Three.js, and C2.js (optional, owner-configured) via OpenRouter, OpenCode Zen, OpenCode Go, Google Gemini, Mistral AI, Mistral Vibe, or DeepSeek depending on the task
+- AI-assisted post rewriting, image alt text, and validated interactive piece generation — p5, Three.js, C2.js, and SVG (optional, owner-configured) via OpenRouter, OpenCode Zen, OpenCode Go, Google Gemini, Mistral AI, Mistral Vibe, or DeepSeek depending on the task
 - reusable interactive art pieces, immersive image/piece routes, and curated exhibit walls made from pieces and uploaded images
 - a single canonical MySQL database shared by local and deployed app instances
 
@@ -52,14 +52,14 @@ Rich posts support:
 - owner-trusted `https:` iframe embeds
 - saved art-piece and exhibit embeds from editor library dialogs
 - optional AI-assisted rewrite from the composer and edit flow, once the owner configures vendors in `/admin/ai`
-- optional AI-assisted piece generation (p5, Three.js, or C2.js) from the composer and edit flow, with a validated preview before any piece can be saved or embedded
+- optional AI-assisted piece generation (p5, Three.js, C2.js, or SVG) from the composer and edit flow, with a validated preview before any piece can be saved or embedded
 - per-platform social post drafts for Bluesky, LinkedIn, Facebook, and Instagram
 
 HTML is sanitized on the server before storage. The frontend renders rich content after that sanitization step.
 
 ### Interactive Pieces
 
-The owner can generate reusable interactive pieces and embed them into posts through app-owned iframe routes. Three engines are supported: **p5** (p5.js instance-mode sketches), **Three.js** (structured 3D scenes), and **C2.js** (2D geometry and simulation pieces).
+The owner can generate reusable interactive pieces and embed them into posts through app-owned iframe routes. Four engines are supported: **p5** (p5.js instance-mode sketches), **Three.js** (structured 3D scenes), **C2.js** (2D geometry and simulation pieces), and **SVG** (animated SVG art pieces with CSS keyframes and optional JavaScript).
 
 Key behavior:
 
@@ -177,9 +177,10 @@ AI is owner-only and disabled per vendor by default. Saved API keys are encrypte
 | `/admin/feeds` | Manage inbound feed subscriptions; set username, bio, and site URL for each source's profile page |
 | `/admin/ai` | Configure AI vendors and task-specific preferences |
 | `/admin/library` | Manage uploaded/imported images, titles, alt text, and exhibit memberships |
-| `/admin/pieces` | Manage reusable p5, Three.js, and C2.js pieces, regenerate versions, capture thumbnails, assign exhibits, and copy iframe embed codes |
+| `/admin/pieces` | Manage reusable p5, Three.js, C2.js, and SVG pieces, regenerate versions, capture thumbnails, assign exhibits, and copy iframe embed codes |
 | `/admin/exhibits` | Create and manage curated exhibit walls |
 | `/admin/pages` | Create and manage static pages |
+| `/admin/recycle-bin` | Restore or permanently delete soft-deleted posts, pieces, media, exhibits, pages, and categories |
 | `/settings` | Site customization (theme, palette, colors, site copy) |
 
 ## Developer
@@ -245,6 +246,7 @@ npm run dev:hot
 | `AI_SETTINGS_ENCRYPTION_KEY` | Yes | 32-byte secret used to encrypt AI API keys **and** platform OAuth app credentials at rest. |
 | `CRON_SECRET` | For scheduled feeds | Must match the GitHub Actions secret of the same name. |
 | `SESSION_SECRET` | Yes | Session signing secret. |
+| `OWNER_EMAILS` | For first-owner auto-claim | Comma-separated email addresses. On a fresh database with no owner yet, the first successful sign-in whose email matches this list is promoted to owner automatically and redirected to `/admin/setup`. |
 
 Generate `AI_SETTINGS_ENCRYPTION_KEY`:
 
@@ -279,7 +281,9 @@ The workflow at `.github/workflows/feed-refresh.yml` runs `bash scripts/schedule
 
 ### Owner Bootstrap
 
-After the first successful sign-in, promote the intended site owner:
+For a fresh database, set `OWNER_EMAILS` to the intended owner's address before the first sign-in. The app promotes that account automatically on first login and redirects to `/admin/setup`.
+
+If you need to promote manually after the fact:
 
 ```bash
 npm run list-users --workspace=@workspace/scripts

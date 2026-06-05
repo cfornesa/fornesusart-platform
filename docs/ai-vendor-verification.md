@@ -61,6 +61,11 @@ Confirm the `user_ai_vendor_settings` row for the owner/vendor pair has:
 - `enabled = 1`
 - `vendor` matching the selected backend slug
 - `model` matching the exact saved slug
+- `profileName` matching the saved profile name (default: `"Default"`)
+
+Confirm the `user_ai_vendor_keys` row for the owner/vendor pair has:
+
+- `vendor` matching the selected backend slug
 - `encrypted_api_key` populated with a non-plaintext value
 
 ### Composer Verification
@@ -78,9 +83,9 @@ Confirm the `user_ai_vendor_settings` row for the owner/vendor pair has:
 ### Interactive Piece Verification
 
 1. Open the post composer or `/admin/pieces`.
-2. Confirm the mode selector exposes `Text` and `Piece`, and the piece engine dropdown exposes `p5`, `c2`, and `Three.js`.
+2. Confirm the mode selector exposes `Text` and `Piece`, and the piece engine dropdown exposes `p5`, `c2`, `Three.js`, and `SVG`.
 3. Enter a short descriptive prompt for an interactive piece.
-4. Select the vendor under test.
+4. Select an engine (`p5`, `c2`, `Three.js`, or `SVG`) and the vendor under test.
 5. Trigger piece generation.
 6. Confirm the generation-progress dialog appears and shows an `Attempts` counter.
 7. Confirm the dialog can be stopped manually.
