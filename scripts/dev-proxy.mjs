@@ -49,6 +49,18 @@ const server = http.createServer((req, res) => {
   req.pipe(proxy, { end: true });
 });
 
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.log(
+      `dev-proxy: port ${PROXY_PORT} already in use — another proxy instance is serving it`,
+    );
+    // Keep the process alive so the workflow stays healthy.
+    setInterval(() => {}, 1 << 30);
+  } else {
+    throw err;
+  }
+});
+
 server.listen(PROXY_PORT, "0.0.0.0", () => {
   console.log(`dev-proxy: listening on port ${PROXY_PORT}`);
 });
