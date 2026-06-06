@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  APPLE_MOBILE_EMBED_QUERY_KEY,
+  buildAppleMobileImmersivePieceHref,
   buildPieceGalleryEmbedHtml,
   buildImmersiveImageHref,
   buildImmersivePieceHref,
@@ -27,6 +29,14 @@ describe("immersive-view helpers", () => {
   it("builds piece immersive routes with optional versions", () => {
     expect(buildImmersivePieceHref(12)).toBe("/immersive/pieces/12");
     expect(buildImmersivePieceHref(12, 4)).toBe("/immersive/pieces/12?version=4");
+  });
+
+  it("adds the Apple-mobile embed escape query flag to canonical immersive piece routes", () => {
+    expect(
+      buildAppleMobileImmersivePieceHref("https://fornesusart.com/immersive/pieces/12?version=4"),
+    ).toBe(
+      `https://fornesusart.com/immersive/pieces/12?version=4&${APPLE_MOBILE_EMBED_QUERY_KEY}=1`,
+    );
   });
 
   it("extracts piece metadata from embed urls", () => {

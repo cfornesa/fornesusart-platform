@@ -34,23 +34,30 @@ options regardless of session context. -->
 
 ---
 
-## 2026-06-05 — Safari iPhone Immersive Embed Fallback
+## 2026-06-05 — Apple-Mobile Safari Immersive Embed Escape + Replit Runtime Preservation
 
 ### Trigger
-Interactive piece gallery embeds could enter native fullscreen on Android, but on iPhone Safari the lower-right immersive control only flipped icon state without producing a usable fullscreen or route transition. The owner confirmed the desired fallback was same-tab navigation to the canonical immersive route so the browser Back button would return the visitor to their current page.
+Commit `26d024f` restored correct Replit development/preview behavior by introducing a proxy-backed microblog preview workflow, so immersive changes could no longer assume the old local-only runtime model. Separately, interactive piece gallery embeds could enter native fullscreen on Android and desktop Safari, but on iPhone/iPad Safari the embed could not reliably escape the iframe confines in a usable way. The owner confirmed the Apple-mobile fallback should open the existing canonical immersive piece route in a new tab and replace `Back` with `Home` there.
 
 ### Decisions Confirmed
-- Embed fullscreen handling is now capability-based rather than Safari-UA-based. In `ImmersiveRouteShell`, embedded immersive views still use native `requestFullscreen()` when the browser allows it.
-- If native fullscreen is rejected in `isEmbedMode`, the fallback is no longer the in-iframe CSS focus mode. The viewer is promoted to the canonical immersive route instead.
-- Canonical promotion prefers top-context same-tab navigation (`window.top.location.assign(...)`) and falls back to same-frame navigation when the top context is unavailable.
+- The Replit runtime/proxy setup introduced by `26d024f` is preserved as required infrastructure: `.replit`, `scripts/dev-proxy.mjs`, and `scripts/microblog-dev.mjs` remain the baseline for app-server + preview behavior.
+- The immersive exception is now scoped narrowly to **interactive piece embeds on iPhone/iPad Safari**, not desktop Safari, Android, images, exhibits, or first-party non-embed immersive entrypoints.
+- A dedicated Apple-mobile Safari detector is used client-side so the exception is device/browser-specific rather than a blanket fullscreen-rejection rule.
+- On Apple-mobile Safari, the interactive embed control opens the existing canonical immersive piece route in a **new tab** with `?appleMobileEmbed=1`, rather than attempting same-tab iframe escape or creating a new public route.
+- The existing `/immersive/pieces/:id` route remains the only public route. The `appleMobileEmbed=1` query flag changes presentation only; it does not create a new canonical URL surface.
+- In the flagged Apple-mobile route context, the header action is `Home` instead of `Back`.
+- `Home` resolves from a new client bootstrap value sourced from `PUBLIC_SITE_URL`, falling back to the canonical public origin when that env var is unset.
+- Non-Apple-mobile immersive route visits keep the existing `Back` behavior.
 - The interactive gallery embed snippet contract changed from `sandbox="allow-scripts allow-same-origin"` to `sandbox="allow-scripts allow-same-origin allow-top-navigation-by-user-activation"`. `allowfullscreen` and `allow="fullscreen"` remain in place.
 - Stored first-party embeds are repaired at render time rather than by rewriting historical post content. `PostContent` now normalizes immersive piece and exhibit iframe sandboxes to the new token set so existing posts on the site inherit the fix automatically.
-- This does **not** retroactively rewrite third-party pages that already pasted older iframe code. Those older external embeds continue to render, but same-tab top-route promotion on Safari depends on the outer iframe sandbox including `allow-top-navigation-by-user-activation`.
+- This does **not** retroactively rewrite third-party pages that already pasted older iframe code. Those older external embeds continue to render, but the improved Apple-mobile escape behavior depends on the current runtime JS plus the outer iframe sandbox including `allow-top-navigation-by-user-activation`.
 
 ### Outcome
-- Native fullscreen behavior is unchanged on browsers that already allowed it.
-- iPhone Safari interactive embeds now fall back to the canonical immersive route instead of appearing non-functional.
-- Existing embeds inside first-party posts inherit the new sandbox and fallback behavior without a database migration or content rewrite.
+- Replit preview/runtime behavior remains aligned with the proxy-based `26d024f` workflow.
+- Native fullscreen behavior remains unchanged on Android and desktop Safari.
+- iPhone/iPad Safari interactive embeds now open the canonical immersive piece route in a new tab instead of remaining trapped inside the embed.
+- The Apple-mobile new-tab immersive view now exposes `Home` rather than `Back`, returning visitors to the canonical public site root.
+- Existing embeds inside first-party posts inherit the new sandbox and Apple-mobile escape behavior without a database migration or content rewrite.
 
 ## 2026-06-05 — AI Image Description Bug Fixes
 

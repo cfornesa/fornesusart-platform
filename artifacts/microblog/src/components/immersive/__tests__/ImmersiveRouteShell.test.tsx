@@ -21,12 +21,14 @@ function StatefulImmersiveRouteShell({
   isEmbedMode = false,
   canonicalHref,
   navigateToCanonicalHref,
+  routeAction,
 }: {
   requestFullscreen?: (this: HTMLElement) => Promise<void>;
   exitFullscreen?: () => Promise<void>;
   isEmbedMode?: boolean;
   canonicalHref?: string;
   navigateToCanonicalHref?: (href: string) => void;
+  routeAction?: { label: string; onClick: () => void; kind?: "back" | "home" };
 } = {}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -51,6 +53,7 @@ function StatefulImmersiveRouteShell({
       isEmbedMode={isEmbedMode}
       canonicalHref={canonicalHref}
       navigateToCanonicalHref={navigateToCanonicalHref}
+      routeAction={routeAction}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       renderScene={({ fullscreen }) => (
         <div data-testid={fullscreen ? "fullscreen-scene" : "scene"}>Scene</div>
@@ -156,6 +159,20 @@ describe("ImmersiveRouteShell", () => {
 
     expect(screen.getByLabelText("Return to gallery view")).toBeTruthy();
     expect(renderScene).toHaveBeenCalledWith({ fullscreen: true, isMobile: true });
+  });
+
+  it("renders a Home action when a custom route action is supplied", async () => {
+    const user = userEvent.setup();
+    const onHome = vi.fn();
+
+    render(
+      <StatefulImmersiveRouteShell
+        routeAction={{ label: "Home", kind: "home", onClick: onHome }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Home" }));
+    expect(onHome).toHaveBeenCalledTimes(1);
   });
 
   it("requests native fullscreen when expanding first-party immersive mode", async () => {

@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Box, Code, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowLeft, Box, Code, Home, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,11 @@ type ImmersiveRouteShellProps = {
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
   navigateToCanonicalHref?: (href: string) => void;
+  routeAction?: {
+    label: string;
+    onClick: () => void;
+    kind?: "back" | "home";
+  };
 };
 
 type ImmersiveStyleSnapshot = {
@@ -193,6 +198,7 @@ export function ImmersiveRouteShell({
   canonicalHref,
   embedCodes,
   navigateToCanonicalHref,
+  routeAction,
 }: ImmersiveRouteShellProps) {
   const routeContainerRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
@@ -414,11 +420,11 @@ export function ImmersiveRouteShell({
         <header className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-3 sm:px-6">
           <button
             type="button"
-            onClick={onBack}
+            onClick={routeAction?.onClick || onBack}
             className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium transition hover:bg-white/10"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back
+            {routeAction?.kind === "home" ? <Home className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+            {routeAction?.label || "Back"}
           </button>
           <div className="min-w-0 flex-1 text-right">
             <p className="text-xs uppercase tracking-[0.22em] text-white/55">Immersive View</p>
