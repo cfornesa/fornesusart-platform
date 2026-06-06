@@ -5,6 +5,7 @@ import {
   buildImmersivePieceHref,
   encodeImmersiveImageRef,
   extractPieceEmbedMeta,
+  INTERACTIVE_IMMERSIVE_EMBED_SANDBOX,
   resolveImmersiveImageSrc,
 } from "../immersive-view";
 
@@ -38,7 +39,7 @@ describe("immersive-view helpers", () => {
 
   it("builds interactive embeds from the immersive route contract", () => {
     expect(buildPieceGalleryEmbedHtml(7, 9, "Orbit Bloom")).toBe(
-      '<iframe src="http://localhost:3000/immersive/pieces/7?embed=1&version=9" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="Orbit Bloom" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>',
+      `<iframe src="http://localhost:3000/immersive/pieces/7?embed=1&version=9" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="Orbit Bloom" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="${INTERACTIVE_IMMERSIVE_EMBED_SANDBOX}"></iframe>`,
     );
   });
 });

@@ -32,6 +32,7 @@ type ImmersiveRouteShellProps = {
   showEmbedFullscreenControl?: boolean;
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
+  navigateToCanonicalHref?: (href: string) => void;
 };
 
 type ImmersiveStyleSnapshot = {
@@ -191,6 +192,7 @@ export function ImmersiveRouteShell({
   showEmbedFullscreenControl = true,
   canonicalHref,
   embedCodes,
+  navigateToCanonicalHref,
 }: ImmersiveRouteShellProps) {
   const routeContainerRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
@@ -198,6 +200,26 @@ export function ImmersiveRouteShell({
   const [isEmbedFullscreen, setIsEmbedFullscreen] = useState(false);
   const [isEmbedFocusMode, setIsEmbedFocusMode] = useState(false);
   const isEmbedExpanded = isEmbedFullscreen || isEmbedFocusMode;
+
+  function promoteEmbedToCanonicalRoute() {
+    if (!canonicalHref) {
+      setIsEmbedFocusMode(true);
+      return;
+    }
+    if (navigateToCanonicalHref) {
+      navigateToCanonicalHref(canonicalHref);
+      return;
+    }
+    try {
+      if (window.top && window.top !== window) {
+        window.top.location.assign(canonicalHref);
+        return;
+      }
+    } catch {
+      // Safari may block access to the top browsing context from sandboxed embeds.
+    }
+    window.location.assign(canonicalHref);
+  }
 
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
@@ -324,7 +346,7 @@ export function ImmersiveRouteShell({
         await requestElementFullscreen(target);
         setIsEmbedFocusMode(false);
       } catch {
-        setIsEmbedFocusMode(true);
+        promoteEmbedToCanonicalRoute();
       }
     }
 

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { PostContent } from "../PostContent";
+import { INTERACTIVE_IMMERSIVE_EMBED_SANDBOX } from "@/lib/immersive-view";
 
 class MockIntersectionObserver {
   static instances: MockIntersectionObserver[] = [];
@@ -73,7 +74,9 @@ describe("PostContent", () => {
     const wrapper = container.querySelector<HTMLElement>("[data-lazy-iframe-wrapper='true']");
     expect(wrapper).not.toBeNull();
     MockIntersectionObserver.instances[0].emit(wrapper!, true);
-    expect(container.querySelector("iframe")?.getAttribute("src")).toContain("/embed/pieces/7?version=9");
+    const frame = container.querySelector("iframe");
+    expect(frame?.getAttribute("src")).toContain("/embed/pieces/7?version=9");
+    expect(frame?.getAttribute("sandbox")).toBe(INTERACTIVE_IMMERSIVE_EMBED_SANDBOX);
 
     MockIntersectionObserver.instances[0].emit(wrapper!, false);
     expect(container.querySelector("iframe")).toBeNull();
@@ -101,6 +104,8 @@ describe("PostContent", () => {
     expect(frames).toHaveLength(2);
     expect(frames[0].getAttribute("src")).toContain("/embed/pieces/7?version=9");
     expect(frames[1].getAttribute("src")).toContain("/embed/pieces/8?version=10");
+    expect(frames[0].getAttribute("sandbox")).toBe(INTERACTIVE_IMMERSIVE_EMBED_SANDBOX);
+    expect(frames[1].getAttribute("sandbox")).toBe(INTERACTIVE_IMMERSIVE_EMBED_SANDBOX);
   });
 
   it("normalizes exhibit embeds to full interactive lazy iframes in post content", () => {
@@ -116,9 +121,11 @@ describe("PostContent", () => {
     expect(wrapper).not.toBeNull();
 
     MockIntersectionObserver.instances[0].emit(wrapper!, true);
-    const frameSrc = container.querySelector("iframe")?.getAttribute("src") ?? "";
+    const frame = container.querySelector("iframe");
+    const frameSrc = frame?.getAttribute("src") ?? "";
     expect(frameSrc).toContain("/immersive/exhibits/orbit-room?embed=1");
     expect(frameSrc).not.toContain("static=1");
+    expect(frame?.getAttribute("sandbox")).toBe(INTERACTIVE_IMMERSIVE_EMBED_SANDBOX);
   });
 
   it("preserves whitespace in plain content", () => {

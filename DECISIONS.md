@@ -34,6 +34,24 @@ options regardless of session context. -->
 
 ---
 
+## 2026-06-05 — Safari iPhone Immersive Embed Fallback
+
+### Trigger
+Interactive piece gallery embeds could enter native fullscreen on Android, but on iPhone Safari the lower-right immersive control only flipped icon state without producing a usable fullscreen or route transition. The owner confirmed the desired fallback was same-tab navigation to the canonical immersive route so the browser Back button would return the visitor to their current page.
+
+### Decisions Confirmed
+- Embed fullscreen handling is now capability-based rather than Safari-UA-based. In `ImmersiveRouteShell`, embedded immersive views still use native `requestFullscreen()` when the browser allows it.
+- If native fullscreen is rejected in `isEmbedMode`, the fallback is no longer the in-iframe CSS focus mode. The viewer is promoted to the canonical immersive route instead.
+- Canonical promotion prefers top-context same-tab navigation (`window.top.location.assign(...)`) and falls back to same-frame navigation when the top context is unavailable.
+- The interactive gallery embed snippet contract changed from `sandbox="allow-scripts allow-same-origin"` to `sandbox="allow-scripts allow-same-origin allow-top-navigation-by-user-activation"`. `allowfullscreen` and `allow="fullscreen"` remain in place.
+- Stored first-party embeds are repaired at render time rather than by rewriting historical post content. `PostContent` now normalizes immersive piece and exhibit iframe sandboxes to the new token set so existing posts on the site inherit the fix automatically.
+- This does **not** retroactively rewrite third-party pages that already pasted older iframe code. Those older external embeds continue to render, but same-tab top-route promotion on Safari depends on the outer iframe sandbox including `allow-top-navigation-by-user-activation`.
+
+### Outcome
+- Native fullscreen behavior is unchanged on browsers that already allowed it.
+- iPhone Safari interactive embeds now fall back to the canonical immersive route instead of appearing non-functional.
+- Existing embeds inside first-party posts inherit the new sandbox and fallback behavior without a database migration or content rewrite.
+
 ## 2026-06-05 — AI Image Description Bug Fixes
 
 ### Root Causes Identified and Fixed

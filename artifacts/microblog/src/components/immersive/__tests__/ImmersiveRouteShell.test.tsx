@@ -19,10 +19,14 @@ function StatefulImmersiveRouteShell({
   requestFullscreen,
   exitFullscreen,
   isEmbedMode = false,
+  canonicalHref,
+  navigateToCanonicalHref,
 }: {
   requestFullscreen?: (this: HTMLElement) => Promise<void>;
   exitFullscreen?: () => Promise<void>;
   isEmbedMode?: boolean;
+  canonicalHref?: string;
+  navigateToCanonicalHref?: (href: string) => void;
 } = {}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -45,6 +49,8 @@ function StatefulImmersiveRouteShell({
       onBack={() => undefined}
       isFullscreen={isFullscreen}
       isEmbedMode={isEmbedMode}
+      canonicalHref={canonicalHref}
+      navigateToCanonicalHref={navigateToCanonicalHref}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       renderScene={({ fullscreen }) => (
         <div data-testid={fullscreen ? "fullscreen-scene" : "scene"}>Scene</div>
@@ -287,23 +293,28 @@ describe("ImmersiveRouteShell", () => {
     expect(screen.getByTestId("immersive-embed-expanded-root").className).toContain("fixed");
   });
 
-  it("falls back to in-frame focus mode when embed fullscreen is rejected", async () => {
+  it("navigates to the canonical immersive route when embed fullscreen is rejected", async () => {
     const user = userEvent.setup();
     const requestFullscreen = vi.fn(() => Promise.reject(new Error("Rejected")));
+    const navigateToCanonicalHref = vi.fn();
 
     render(
       <StatefulImmersiveRouteShell
         isEmbedMode
         requestFullscreen={requestFullscreen}
+        canonicalHref="https://fornesusart.com/immersive/pieces/7"
+        navigateToCanonicalHref={navigateToCanonicalHref}
       />,
     );
 
     await user.click(screen.getByLabelText("Expand immersive view"));
 
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("fullscreen-scene")).toBeTruthy();
-    expect(screen.getByLabelText("Return to gallery view")).toBeTruthy();
-    expect(screen.getByTestId("immersive-embed-expanded-root").className).toContain("fixed");
+    expect(navigateToCanonicalHref).toHaveBeenCalledWith(
+      "https://fornesusart.com/immersive/pieces/7",
+    );
+    expect(screen.queryByTestId("fullscreen-scene")).toBeNull();
+    expect(screen.getByTestId("immersive-embed-root")).toBeTruthy();
   });
 
   it("lets embed focus mode exit cleanly after fullscreen fallback", async () => {
