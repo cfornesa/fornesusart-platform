@@ -355,22 +355,20 @@ export function ImmersiveRouteShell({
         )}
       >
         {renderScene({ fullscreen: isEmbedExpanded, isMobile: false })}
-        {shouldUseIPhoneEmbedLauncher ? (
-          <a
-            href={canonicalHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open immersive view"
-            className="absolute inset-0 z-20 flex items-end justify-end bg-gradient-to-t from-black/30 via-black/5 to-transparent p-4 text-white transition hover:from-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-          >
-            <span className="inline-flex min-h-10 items-center rounded-full border border-white/20 bg-black/60 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] shadow-lg backdrop-blur">
-              <Box className="mr-1.5 h-3.5 w-3.5 shrink-0" />
-              <span aria-hidden="true">Open immersive view</span>
-            </span>
-          </a>
-        ) : null}
         <div className="pointer-events-none absolute inset-0 z-10">
           <div className="pointer-events-auto absolute bottom-4 right-4 z-20 flex items-center gap-2">
+            {shouldUseIPhoneEmbedLauncher ? (
+              <a
+                href={canonicalHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open immersive view in a new tab"
+                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/20 bg-black/55 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-lg backdrop-blur transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              >
+                <Box className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                <span aria-hidden="true">VR</span>
+              </a>
+            ) : null}
             {canonicalHref && !showEmbedFullscreenControl ? (
               <a
                 href={canonicalHref}

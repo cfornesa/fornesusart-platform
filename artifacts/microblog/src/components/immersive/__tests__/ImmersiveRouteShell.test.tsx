@@ -89,7 +89,7 @@ function mockNavigatorUserAgent(userAgent: string, maxTouchPoints = 0) {
 }
 
 describe("ImmersiveRouteShell", () => {
-  it("renders an iPhone-only full-surface launcher for embed mode", () => {
+  it("renders an iPhone-only lower-right launcher for embed mode", () => {
     mockNavigatorUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
@@ -102,7 +102,7 @@ describe("ImmersiveRouteShell", () => {
       />,
     );
 
-    const launcher = screen.getByLabelText("Open immersive view");
+    const launcher = screen.getByLabelText("Open immersive view in a new tab");
     expect(launcher).toBeTruthy();
     expect(launcher.getAttribute("href")).toBe("https://example.com/immersive/pieces/7?version=9");
     expect(launcher.getAttribute("target")).toBe("_blank");
@@ -123,7 +123,7 @@ describe("ImmersiveRouteShell", () => {
       />,
     );
 
-    expect(screen.queryByLabelText("Open immersive view")).toBeNull();
+    expect(screen.queryByLabelText("Open immersive view in a new tab")).toBeNull();
     expect(screen.getByLabelText("Expand immersive view")).toBeTruthy();
   });
 
@@ -400,14 +400,14 @@ describe("ImmersiveRouteShell", () => {
     expect(screen.queryByTestId("fullscreen-scene")).toBeNull();
   });
 
-  it("does not render the iPhone launcher when canonicalHref is missing", () => {
+  it("does not render the iPhone lower-right launcher when canonicalHref is missing", () => {
     mockNavigatorUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
 
     render(<StatefulImmersiveRouteShell isEmbedMode enableIPhoneEmbedLauncher />);
 
-    expect(screen.queryByLabelText("Open immersive view")).toBeNull();
+    expect(screen.queryByLabelText("Open immersive view in a new tab")).toBeNull();
     expect(screen.getByLabelText("Expand immersive view")).toBeTruthy();
   });
 
@@ -423,7 +423,7 @@ describe("ImmersiveRouteShell", () => {
       />,
     );
 
-    expect(screen.queryByLabelText("Open immersive view")).toBeNull();
+    expect(screen.queryByLabelText("Open immersive view in a new tab")).toBeNull();
     expect(screen.getByLabelText("Expand immersive view")).toBeTruthy();
   });
 });
