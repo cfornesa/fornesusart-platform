@@ -32,6 +32,7 @@ type ImmersiveRouteShellProps = {
   showEmbedFullscreenControl?: boolean;
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
+  enableIPhoneEmbedLauncher?: boolean;
 };
 
 type ImmersiveStyleSnapshot = {
@@ -202,6 +203,7 @@ export function ImmersiveRouteShell({
   showEmbedFullscreenControl = true,
   canonicalHref,
   embedCodes,
+  enableIPhoneEmbedLauncher = false,
 }: ImmersiveRouteShellProps) {
   const routeContainerRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
@@ -210,7 +212,7 @@ export function ImmersiveRouteShell({
   const [isEmbedFocusMode, setIsEmbedFocusMode] = useState(false);
   const isEmbedExpanded = isEmbedFullscreen || isEmbedFocusMode;
   const shouldUseIPhoneEmbedLauncher =
-    isEmbedMode && !!canonicalHref && isIPhoneWebKitBrowser();
+    enableIPhoneEmbedLauncher && isEmbedMode && !!canonicalHref && isIPhoneWebKitBrowser();
 
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;

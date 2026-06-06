@@ -20,11 +20,13 @@ function StatefulImmersiveRouteShell({
   exitFullscreen,
   isEmbedMode = false,
   canonicalHref,
+  enableIPhoneEmbedLauncher = false,
 }: {
   requestFullscreen?: (this: HTMLElement) => Promise<void>;
   exitFullscreen?: () => Promise<void>;
   isEmbedMode?: boolean;
   canonicalHref?: string;
+  enableIPhoneEmbedLauncher?: boolean;
 } = {}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -48,6 +50,7 @@ function StatefulImmersiveRouteShell({
       isFullscreen={isFullscreen}
       isEmbedMode={isEmbedMode}
       canonicalHref={canonicalHref}
+      enableIPhoneEmbedLauncher={enableIPhoneEmbedLauncher}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       renderScene={({ fullscreen }) => (
         <div data-testid={fullscreen ? "fullscreen-scene" : "scene"}>Scene</div>
@@ -95,6 +98,7 @@ describe("ImmersiveRouteShell", () => {
       <StatefulImmersiveRouteShell
         isEmbedMode
         canonicalHref="https://example.com/immersive/pieces/7?version=9"
+        enableIPhoneEmbedLauncher
       />,
     );
 
@@ -115,6 +119,7 @@ describe("ImmersiveRouteShell", () => {
       <StatefulImmersiveRouteShell
         isEmbedMode
         canonicalHref="https://example.com/immersive/pieces/7?version=9"
+        enableIPhoneEmbedLauncher
       />,
     );
 
@@ -400,7 +405,23 @@ describe("ImmersiveRouteShell", () => {
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
 
-    render(<StatefulImmersiveRouteShell isEmbedMode />);
+    render(<StatefulImmersiveRouteShell isEmbedMode enableIPhoneEmbedLauncher />);
+
+    expect(screen.queryByLabelText("Open immersive view")).toBeNull();
+    expect(screen.getByLabelText("Expand immersive view")).toBeTruthy();
+  });
+
+  it("keeps the fullscreen control when the iPhone launcher is not enabled", () => {
+    mockNavigatorUserAgent(
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    );
+
+    render(
+      <StatefulImmersiveRouteShell
+        isEmbedMode
+        canonicalHref="https://example.com/immersive/images/example"
+      />,
+    );
 
     expect(screen.queryByLabelText("Open immersive view")).toBeNull();
     expect(screen.getByLabelText("Expand immersive view")).toBeTruthy();

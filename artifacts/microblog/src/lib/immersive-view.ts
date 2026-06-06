@@ -135,7 +135,7 @@ export function buildPieceGalleryEmbedHtml(
   }
   const src = `${origin}/immersive/pieces/${pieceId}?${params}`;
   const safeTitle = title.replace(/"/g, "&quot;");
-  return `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>`;
+  return `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>`;
 }
 
 export function buildImageGalleryEmbedHtml(

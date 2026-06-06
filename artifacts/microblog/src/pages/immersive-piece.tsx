@@ -1189,6 +1189,7 @@ export default function ImmersivePiecePage() {
       isEmbedMode={isEmbedMode}
       showEmbedFullscreenControl={!isStaticEmbed}
       canonicalHref={canonicalHref}
+      enableIPhoneEmbedLauncher
       embedCodes={{
         plain: { label: "Embed Piece", code: plainEmbedCode },
         gallery: { label: "Embed Interactive", code: galleryEmbedCode },
