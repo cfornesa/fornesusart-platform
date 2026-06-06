@@ -153,7 +153,8 @@ export function buildImageGalleryEmbedHtml(
   if (metadata.caption?.trim()) params.set("caption", metadata.caption.trim());
   const src = `${origin}/immersive/images/${encodedRef}?${params}`;
   const safeTitle = (metadata.title || metadata.alt || "Immersive image").replace(/"/g, "&quot;");
-  return `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>`;
+  const iframeHtml = `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>`;
+  return `<creatr-immersive-image ref="${encodedRef}" origin="${origin}">${iframeHtml}</creatr-immersive-image><script src="${origin}/embed.js" defer></script>`;
 }
 
 export function buildPlainImageEmbedHtml(
@@ -191,7 +192,8 @@ export function buildExhibitGalleryEmbedHtml(
 ): string {
   const src = `${origin}/immersive/exhibits/${slug}?embed=1`;
   const safeTitle = name.replace(/"/g, "&quot;");
-  return `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="${INTERACTIVE_IMMERSIVE_EMBED_SANDBOX}"></iframe>`;
+  const iframeHtml = `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="${INTERACTIVE_IMMERSIVE_EMBED_SANDBOX}"></iframe>`;
+  return `<creatr-exhibit-wall slug="${slug}" origin="${origin}">${iframeHtml}</creatr-exhibit-wall><script src="${origin}/embed.js" defer></script>`;
 }
 
 export function extractPieceEmbedMeta(src: string, origin = window.location.origin) {

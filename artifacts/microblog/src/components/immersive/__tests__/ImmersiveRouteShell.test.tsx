@@ -406,18 +406,72 @@ describe("ImmersiveRouteShell", () => {
     expect(button).toBeNull();
   });
 
-  it("renders the fullscreen control on iPhone when NOT in embed mode", () => {
+  it("renders the fullscreen control on iPhone in embed mode when wrapped", async () => {
     mockNavigatorUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
 
     render(
       <StatefulImmersiveRouteShell
-        isEmbedMode={false}
-        canonicalHref="https://example.com/immersive/pieces/7"
+        isEmbedMode
+        canonicalHref="https://example.com/immersive/pieces/7?version=9"
       />,
     );
 
+    // Initially hidden because hasWrapper is false
+    expect(screen.queryByLabelText("Expand immersive view")).toBeNull();
+
+    // Simulate parent connecting handshake (postMessage)
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: { type: "creatr-wrapper-connected" },
+        })
+      );
+    });
+
+    // Should now be visible
     expect(screen.getByLabelText("Expand immersive view")).toBeTruthy();
+  });
+
+  it("sends postMessage to parent window when wrapped on iPhone and clicked", async () => {
+    mockNavigatorUserAgent(
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    );
+    const user = userEvent.setup();
+
+    // Mock window.parent as a separate object to trigger window.parent !== window
+    const parentMock = {
+      postMessage: vi.fn(),
+    };
+    Object.defineProperty(window, "parent", {
+      configurable: true,
+      value: parentMock,
+    });
+
+    render(
+      <StatefulImmersiveRouteShell
+        isEmbedMode
+        canonicalHref="https://example.com/immersive/pieces/7?version=9"
+      />,
+    );
+
+    // Connect handshake
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: { type: "creatr-wrapper-connected" },
+        })
+      );
+    });
+
+    const button = screen.getByLabelText("Expand immersive view");
+    await user.click(button);
+
+    // Should send postMessage to parent to toggle fullscreen
+    expect(parentMock.postMessage).toHaveBeenCalledWith(
+      { type: "creatr-toggle-fullscreen", value: true },
+      "*"
+    );
   });
 });

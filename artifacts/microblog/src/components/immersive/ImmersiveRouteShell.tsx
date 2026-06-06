@@ -211,10 +211,30 @@ export function ImmersiveRouteShell({
   const [isEmbedFullscreen, setIsEmbedFullscreen] = useState(false);
   const [isEmbedFocusMode, setIsEmbedFocusMode] = useState(false);
   const isEmbedExpanded = isEmbedFullscreen || isEmbedFocusMode;
+  const [hasWrapper, setHasWrapper] = useState(false);
 
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
   }, [isFullscreen]);
+
+  useEffect(() => {
+    if (!isEmbedMode) return;
+    function handleMessage(e: MessageEvent) {
+      if (e.data && e.data.type === "creatr-wrapper-connected") {
+        setHasWrapper(true);
+      }
+      if (e.data && e.data.type === "creatr-parent-exit-fullscreen") {
+        setIsEmbedFocusMode(false);
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "creatr-iframe-ready" }, "*");
+      }
+    } catch {}
+    return () => window.removeEventListener("message", handleMessage);
+  }, [isEmbedMode]);
 
   useEffect(() => {
     function onFullscreenChange() {
@@ -315,6 +335,19 @@ export function ImmersiveRouteShell({
 
   if (isEmbedMode) {
     async function handleEmbedToggle() {
+      if (hasWrapper) {
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(
+              { type: "creatr-toggle-fullscreen", value: !isEmbedFocusMode },
+              "*"
+            );
+            setIsEmbedFocusMode((prev) => !prev);
+            return;
+          }
+        } catch {}
+      }
+
       if (isIPhoneWebKitBrowser()) {
         const targetUrl = new URL(canonicalHref || window.location.href, window.location.origin);
         targetUrl.searchParams.set("fullscreen", "1");
@@ -372,7 +405,7 @@ export function ImmersiveRouteShell({
         {renderScene({ fullscreen: isEmbedExpanded, isMobile: false })}
         <div className="pointer-events-none absolute inset-0 z-10">
           <div className="pointer-events-auto absolute bottom-4 right-4 z-20 flex items-center gap-2">
-            {!(isEmbedMode && isIPhoneWebKitBrowser()) && (
+            {!(isEmbedMode && isIPhoneWebKitBrowser() && !hasWrapper) && (
               <>
                 {canonicalHref && !showEmbedFullscreenControl ? (
                   <a

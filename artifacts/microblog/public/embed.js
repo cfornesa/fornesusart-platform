@@ -360,5 +360,149 @@
     }
   }
 
+  class CreatrImmersiveImage extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: block;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #0a0a14;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          :host(.fullscreen) {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          ::slotted(iframe) {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            display: block !important;
+          }
+        </style>
+        <slot></slot>
+      `;
+      this.handleMessage = this.handleMessage.bind(this);
+    }
+
+    connectedCallback() {
+      window.addEventListener("message", this.handleMessage);
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener("message", this.handleMessage);
+      document.body.style.overflow = "";
+    }
+
+    handleMessage(e) {
+      const iframe = this.querySelector("iframe");
+      if (!iframe || iframe.contentWindow !== e.source) return;
+
+      if (e.data && e.data.type === "creatr-iframe-ready") {
+        iframe.contentWindow.postMessage({ type: "creatr-wrapper-connected" }, "*");
+      }
+
+      if (e.data && e.data.type === "creatr-toggle-fullscreen") {
+        const shouldBeFullscreen = !!e.data.value;
+        if (shouldBeFullscreen) {
+          this.classList.add("fullscreen");
+          document.body.style.overflow = "hidden";
+        } else {
+          this.classList.remove("fullscreen");
+          document.body.style.overflow = "";
+        }
+        window.dispatchEvent(new Event("resize"));
+      }
+    }
+  }
+
+  class CreatrExhibitWall extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: block;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #0a0a14;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          :host(.fullscreen) {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          ::slotted(iframe) {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            display: block !important;
+          }
+        </style>
+        <slot></slot>
+      `;
+      this.handleMessage = this.handleMessage.bind(this);
+    }
+
+    connectedCallback() {
+      window.addEventListener("message", this.handleMessage);
+    }
+
+    disconnectedCallback() {
+      window.removeEventListener("message", this.handleMessage);
+      document.body.style.overflow = "";
+    }
+
+    handleMessage(e) {
+      const iframe = this.querySelector("iframe");
+      if (!iframe || iframe.contentWindow !== e.source) return;
+
+      if (e.data && e.data.type === "creatr-iframe-ready") {
+        iframe.contentWindow.postMessage({ type: "creatr-wrapper-connected" }, "*");
+      }
+
+      if (e.data && e.data.type === "creatr-toggle-fullscreen") {
+        const shouldBeFullscreen = !!e.data.value;
+        if (shouldBeFullscreen) {
+          this.classList.add("fullscreen");
+          document.body.style.overflow = "hidden";
+        } else {
+          this.classList.remove("fullscreen");
+          document.body.style.overflow = "";
+        }
+        window.dispatchEvent(new Event("resize"));
+      }
+    }
+  }
+
   customElements.define("creatr-art-piece", CreatrArtPiece);
+  customElements.define("creatr-immersive-image", CreatrImmersiveImage);
+  customElements.define("creatr-exhibit-wall", CreatrExhibitWall);
 })();

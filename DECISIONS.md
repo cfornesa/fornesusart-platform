@@ -34,6 +34,26 @@ options regardless of session context. -->
 
 ---
 
+## 2026-06-06 — iPhone Progressive Web Component Embed for Images and Exhibits
+
+### Trigger
+While the progressive Web Component embed (`<creatr-art-piece>`) resolved iPhone immersive fullscreen restrictions for art pieces by rendering them directly in a Shadow DOM, applying the same direct-rendering approach to images and exhibits would require duplicating the React layout/interactivity and Three.js 3D gallery engines inside `embed.js`. This would create significant maintenance overhead and increase the size of `embed.js`.
+
+### Decisions Confirmed
+- **IFrame Wrapper Resizer Custom Elements** (`<creatr-immersive-image>` and `<creatr-exhibit-wall>`) are implemented for image and exhibit embeds.
+- Instead of replacing the fallback iframe, these Custom Elements wrap it.
+- A dynamic postMessage connection handshake (`creatr-iframe-ready` -> `creatr-wrapper-connected`) is established between the wrapper custom elements and the child iframes.
+- In `ImmersiveRouteShell.tsx`, if the child iframe detects it is running inside our Web Component wrapper (`hasWrapper` is true), the fullscreen control button is displayed on iPhones instead of being hidden.
+- Clicking the control on iPhone when wrapped sends a `creatr-toggle-fullscreen` message to the parent wrapper.
+- The parent wrapper handles this message by toggling a `.fullscreen` CSS class on itself, styling it to fixed-viewport on the host page. The slotted `<iframe>` (styled to `100%` width and height) automatically expands to fill the viewport, bypassing iframe sandboxing/clipping bounds.
+- All unit and integration tests are updated and fully pass.
+
+### Outcome
+- iPhone visitors on external sites can view embedded immersive images and 3D exhibits in full viewport mode.
+- The implementation completely avoids engine code duplication, keeping `embed.js` lightweight and maintainable.
+
+---
+
 ## 2026-06-06 — iPhone Progressive Web Component Embed with IFrame Fallback
 
 ### Trigger

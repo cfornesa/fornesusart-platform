@@ -195,6 +195,9 @@
 2026-06-06 · DIRECTION · Uses Shadow DOM isolation for interactive Web Component embeds to guarantee design consistency and prevent leakage, while keeping styling aligned with the site's dark aesthetic.
     [Surfaced when implementing the Shadow DOM based styling and fixed overlay for <creatr-art-piece>.]
 
+2026-06-06 · DIRECTION · Employs progressive HTML/CSS Web Component iframe wrapper resizers to escape iframe clipping on iPhones without duplicating codebase engines.
+    [Surfaced when implementing <creatr-immersive-image> and <creatr-exhibit-wall> wrapper elements.]
+
 ---
 
 <!-- The agent holds the brush. You choose what gets painted.
