@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  APPLE_MOBILE_EMBED_QUERY_KEY,
-  buildAppleMobileImmersivePieceHref,
   buildPieceGalleryEmbedHtml,
   buildImmersiveImageHref,
   buildImmersivePieceHref,
   encodeImmersiveImageRef,
   extractPieceEmbedMeta,
-  INTERACTIVE_IMMERSIVE_EMBED_SANDBOX,
   resolveImmersiveImageSrc,
 } from "../immersive-view";
 
@@ -31,14 +28,6 @@ describe("immersive-view helpers", () => {
     expect(buildImmersivePieceHref(12, 4)).toBe("/immersive/pieces/12?version=4");
   });
 
-  it("adds the Apple-mobile embed escape query flag to canonical immersive piece routes", () => {
-    expect(
-      buildAppleMobileImmersivePieceHref("https://fornesusart.com/immersive/pieces/12?version=4"),
-    ).toBe(
-      `https://fornesusart.com/immersive/pieces/12?version=4&${APPLE_MOBILE_EMBED_QUERY_KEY}=1`,
-    );
-  });
-
   it("extracts piece metadata from embed urls", () => {
     expect(extractPieceEmbedMeta("/embed/pieces/9?version=3")).toEqual({
       id: 9,
@@ -49,7 +38,7 @@ describe("immersive-view helpers", () => {
 
   it("builds interactive embeds from the immersive route contract", () => {
     expect(buildPieceGalleryEmbedHtml(7, 9, "Orbit Bloom")).toBe(
-      `<iframe src="http://localhost:3000/immersive/pieces/7?embed=1&version=9" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="Orbit Bloom" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="${INTERACTIVE_IMMERSIVE_EMBED_SANDBOX}"></iframe>`,
+      '<iframe src="http://localhost:3000/immersive/pieces/7?embed=1&version=9" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="Orbit Bloom" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>',
     );
   });
 });

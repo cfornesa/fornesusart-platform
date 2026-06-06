@@ -38,12 +38,9 @@ import {
   ImmersiveRouteShell,
 } from "@/components/immersive/ImmersiveRouteShell";
 import {
-  APPLE_MOBILE_EMBED_QUERY_KEY,
-  buildAppleMobileImmersivePieceHref,
   buildImmersivePieceHref,
   buildPieceGalleryEmbedHtml,
 } from "@/lib/immersive-view";
-import { isAppleMobileSafari } from "@/lib/apple-mobile-safari";
 
 function useReturnToPrevious() {
   const [, setLocation] = useLocation();
@@ -1113,68 +1110,10 @@ export default function ImmersivePiecePage() {
   const versionId = versionRaw ? Number(versionRaw) : undefined;
   const isEmbedMode = searchParams.get("embed") === "1";
   const isStaticEmbed = searchParams.get("static") === "1";
-  const isAppleMobileEmbedEscape = searchParams.get(APPLE_MOBILE_EMBED_QUERY_KEY) === "1";
-  const isAppleMobileSafariRuntime = useMemo(() => isAppleMobileSafari(), []);
-  const siteHomeUrl = useMemo(() => {
-    const bootstrapValue = (window as any).__SITE_HOME_URL__;
-    if (typeof bootstrapValue === "string" && bootstrapValue.trim()) {
-      return bootstrapValue.trim();
-    }
-    return `${window.location.origin}/`;
-  }, []);
 
   const canonicalHref = useMemo(
     () => `${window.location.origin}${buildImmersivePieceHref(pieceId, versionId)}`,
     [pieceId, versionId],
-  );
-
-  const routeAction = useMemo(
-    () => (
-      isAppleMobileEmbedEscape
-        ? {
-            label: "Home",
-            kind: "home" as const,
-            onClick: () => {
-              window.location.assign(siteHomeUrl);
-            },
-          }
-        : undefined
-    ),
-    [isAppleMobileEmbedEscape, siteHomeUrl],
-  );
-  const appleMobileEmbedOpenHref = useMemo(
-    () => (
-      isEmbedMode && !isStaticEmbed && isAppleMobileSafariRuntime
-        ? buildAppleMobileImmersivePieceHref(canonicalHref)
-        : undefined
-    ),
-    [canonicalHref, isAppleMobileSafariRuntime, isEmbedMode, isStaticEmbed],
-  );
-  const navigateToCanonicalHref = useMemo(
-    () => (
-      isEmbedMode
-        ? (href: string) => {
-            if (isAppleMobileSafariRuntime) {
-              window.open(
-                buildAppleMobileImmersivePieceHref(href),
-                "_blank",
-                "noopener,noreferrer",
-              );
-              return;
-            }
-            try {
-              if (window.top && window.top !== window) {
-                window.top.location.assign(href);
-                return;
-              }
-            } catch {
-              // Cross-context access can fail for some embed hosts.
-            }
-            window.location.assign(href);
-          }
-        : undefined
-    ),
-    [isAppleMobileSafariRuntime, isEmbedMode],
   );
 
   const { data, isLoading, error } = useGetEmbeddedArtPiece(
@@ -1198,16 +1137,12 @@ export default function ImmersivePiecePage() {
           setIsFullscreen(false);
           return;
         }
-        if (isAppleMobileEmbedEscape) {
-          window.location.assign(siteHomeUrl);
-          return;
-        }
         goBack();
       }
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [goBack, isAppleMobileEmbedEscape, isFullscreen, siteHomeUrl]);
+  }, [goBack, isFullscreen]);
 
   const title = useMemo(() => data?.title || "Immersive piece", [data?.title]);
 
@@ -1247,17 +1182,13 @@ export default function ImmersivePiecePage() {
   const galleryEmbedCode = buildPieceGalleryEmbedHtml(pieceId, versionId, title, window.location.origin);
 
   return (
-      <ImmersiveRouteShell
+    <ImmersiveRouteShell
       title={title}
       onBack={goBack}
-      routeAction={routeAction}
       isFullscreen={isFullscreen}
       isEmbedMode={isEmbedMode}
       showEmbedFullscreenControl={!isStaticEmbed}
       canonicalHref={canonicalHref}
-      embedOpenHref={appleMobileEmbedOpenHref}
-      embedOpenLabel={appleMobileEmbedOpenHref ? "Open immersive view in a new tab" : undefined}
-      navigateToCanonicalHref={navigateToCanonicalHref}
       embedCodes={{
         plain: { label: "Embed Piece", code: plainEmbedCode },
         gallery: { label: "Embed Interactive", code: galleryEmbedCode },

@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Box, Code, Home, Maximize2, Minimize2 } from "lucide-react";
+import { ArrowLeft, Box, Code, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -32,14 +32,6 @@ type ImmersiveRouteShellProps = {
   showEmbedFullscreenControl?: boolean;
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
-  navigateToCanonicalHref?: (href: string) => void;
-  embedOpenHref?: string;
-  embedOpenLabel?: string;
-  routeAction?: {
-    label: string;
-    onClick: () => void;
-    kind?: "back" | "home";
-  };
 };
 
 type ImmersiveStyleSnapshot = {
@@ -199,10 +191,6 @@ export function ImmersiveRouteShell({
   showEmbedFullscreenControl = true,
   canonicalHref,
   embedCodes,
-  navigateToCanonicalHref,
-  embedOpenHref,
-  embedOpenLabel = "Open immersive view",
-  routeAction,
 }: ImmersiveRouteShellProps) {
   const routeContainerRef = useRef<HTMLDivElement>(null);
   const embedContainerRef = useRef<HTMLDivElement>(null);
@@ -210,26 +198,6 @@ export function ImmersiveRouteShell({
   const [isEmbedFullscreen, setIsEmbedFullscreen] = useState(false);
   const [isEmbedFocusMode, setIsEmbedFocusMode] = useState(false);
   const isEmbedExpanded = isEmbedFullscreen || isEmbedFocusMode;
-
-  function promoteEmbedToCanonicalRoute() {
-    if (!canonicalHref) {
-      setIsEmbedFocusMode(true);
-      return;
-    }
-    if (navigateToCanonicalHref) {
-      navigateToCanonicalHref(canonicalHref);
-      return;
-    }
-    try {
-      if (window.top && window.top !== window) {
-        window.top.location.assign(canonicalHref);
-        return;
-      }
-    } catch {
-      // Safari may block access to the top browsing context from sandboxed embeds.
-    }
-    window.location.assign(canonicalHref);
-  }
 
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
@@ -333,18 +301,6 @@ export function ImmersiveRouteShell({
   }
 
   if (isEmbedMode) {
-    const embedOpenControl = embedOpenHref ? (
-      <a
-        href={embedOpenHref}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={embedOpenLabel}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-      >
-        <Maximize2 className="h-5 w-5" />
-      </a>
-    ) : null;
-
     async function handleEmbedToggle() {
       if (isEmbedExpanded) {
         if (document.fullscreenElement === embedContainerRef.current) {
@@ -359,11 +315,6 @@ export function ImmersiveRouteShell({
         return;
       }
 
-      if (embedOpenHref) {
-        window.open(embedOpenHref, "_blank", "noopener,noreferrer");
-        return;
-      }
-
       const target = embedContainerRef.current;
       if (!target) {
         return;
@@ -373,7 +324,7 @@ export function ImmersiveRouteShell({
         await requestElementFullscreen(target);
         setIsEmbedFocusMode(false);
       } catch {
-        promoteEmbedToCanonicalRoute();
+        setIsEmbedFocusMode(true);
       }
     }
 
@@ -403,8 +354,7 @@ export function ImmersiveRouteShell({
                 <span aria-hidden="true">VR</span>
               </a>
             ) : null}
-            {showEmbedFullscreenControl && embedOpenControl ? embedOpenControl : null}
-            {showEmbedFullscreenControl && !embedOpenControl ? (
+            {showEmbedFullscreenControl ? (
               <FullscreenToggleButton
                 isFullscreen={isEmbedExpanded}
                 onToggle={handleEmbedToggle}
@@ -442,11 +392,11 @@ export function ImmersiveRouteShell({
         <header className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-3 sm:px-6">
           <button
             type="button"
-            onClick={routeAction?.onClick || onBack}
+            onClick={onBack}
             className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium transition hover:bg-white/10"
           >
-            {routeAction?.kind === "home" ? <Home className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-            {routeAction?.label || "Back"}
+            <ArrowLeft className="h-4 w-4" />
+            Back
           </button>
           <div className="min-w-0 flex-1 text-right">
             <p className="text-xs uppercase tracking-[0.22em] text-white/55">Immersive View</p>

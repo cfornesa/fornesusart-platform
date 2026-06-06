@@ -318,11 +318,9 @@ function applyThemeToHtml(html: string, themeId: string, css: string, descriptio
 
 function buildGlobalScripts(canonicalOrigin: string, defaultThemeMode: string | null | undefined): string {
   const mode = defaultThemeMode || "system";
-  const siteHomeUrl = `${(process.env.PUBLIC_SITE_URL?.trim() || canonicalOrigin).replace(/\/$/, "")}/`;
   return `
   <script>
     window.__CANONICAL_ORIGIN__ = ${JSON.stringify(canonicalOrigin)};
-    window.__SITE_HOME_URL__ = ${JSON.stringify(siteHomeUrl)};
   </script>
   <script id="theme-mode-bootstrap">
     (function() {

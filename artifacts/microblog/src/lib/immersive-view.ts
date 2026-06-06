@@ -5,9 +5,6 @@ export type ImmersiveImageMetadata = {
 };
 
 const RESPONSIVE_EMBED_IFRAME_STYLE = "width:100%;aspect-ratio:16 / 9;display:block;";
-export const INTERACTIVE_IMMERSIVE_EMBED_SANDBOX =
-  "allow-scripts allow-same-origin allow-top-navigation-by-user-activation allow-popups allow-popups-to-escape-sandbox";
-export const APPLE_MOBILE_EMBED_QUERY_KEY = "appleMobileEmbed";
 
 const IMAGE_QUERY_KEYS = {
   alt: "alt",
@@ -138,13 +135,7 @@ export function buildPieceGalleryEmbedHtml(
   }
   const src = `${origin}/immersive/pieces/${pieceId}?${params}`;
   const safeTitle = title.replace(/"/g, "&quot;");
-  return `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="${INTERACTIVE_IMMERSIVE_EMBED_SANDBOX}"></iframe>`;
-}
-
-export function buildAppleMobileImmersivePieceHref(canonicalHref: string) {
-  const href = new URL(canonicalHref, window.location.origin);
-  href.searchParams.set(APPLE_MOBILE_EMBED_QUERY_KEY, "1");
-  return href.toString();
+  return `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>`;
 }
 
 export function buildImageGalleryEmbedHtml(

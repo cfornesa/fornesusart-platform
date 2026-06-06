@@ -19,20 +19,10 @@ function StatefulImmersiveRouteShell({
   requestFullscreen,
   exitFullscreen,
   isEmbedMode = false,
-  canonicalHref,
-  navigateToCanonicalHref,
-  embedOpenHref,
-  embedOpenLabel,
-  routeAction,
 }: {
   requestFullscreen?: (this: HTMLElement) => Promise<void>;
   exitFullscreen?: () => Promise<void>;
   isEmbedMode?: boolean;
-  canonicalHref?: string;
-  navigateToCanonicalHref?: (href: string) => void;
-  embedOpenHref?: string;
-  embedOpenLabel?: string;
-  routeAction?: { label: string; onClick: () => void; kind?: "back" | "home" };
 } = {}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -55,11 +45,6 @@ function StatefulImmersiveRouteShell({
       onBack={() => undefined}
       isFullscreen={isFullscreen}
       isEmbedMode={isEmbedMode}
-      canonicalHref={canonicalHref}
-      navigateToCanonicalHref={navigateToCanonicalHref}
-      embedOpenHref={embedOpenHref}
-      embedOpenLabel={embedOpenLabel}
-      routeAction={routeAction}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       renderScene={({ fullscreen }) => (
         <div data-testid={fullscreen ? "fullscreen-scene" : "scene"}>Scene</div>
@@ -165,20 +150,6 @@ describe("ImmersiveRouteShell", () => {
 
     expect(screen.getByLabelText("Return to gallery view")).toBeTruthy();
     expect(renderScene).toHaveBeenCalledWith({ fullscreen: true, isMobile: true });
-  });
-
-  it("renders a Home action when a custom route action is supplied", async () => {
-    const user = userEvent.setup();
-    const onHome = vi.fn();
-
-    render(
-      <StatefulImmersiveRouteShell
-        routeAction={{ label: "Home", kind: "home", onClick: onHome }}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Home" }));
-    expect(onHome).toHaveBeenCalledTimes(1);
   });
 
   it("requests native fullscreen when expanding first-party immersive mode", async () => {
@@ -316,45 +287,23 @@ describe("ImmersiveRouteShell", () => {
     expect(screen.getByTestId("immersive-embed-expanded-root").className).toContain("fixed");
   });
 
-  it("renders a direct new-tab control for embed escape when embedOpenHref is provided", () => {
-    render(
-      <StatefulImmersiveRouteShell
-        isEmbedMode
-        embedOpenHref="https://fornesusart.com/immersive/pieces/7?appleMobileEmbed=1"
-        embedOpenLabel="Open immersive view in a new tab"
-      />,
-    );
-
-    const link = screen.getByRole("link", { name: "Open immersive view in a new tab" });
-    expect(link.getAttribute("href")).toBe(
-      "https://fornesusart.com/immersive/pieces/7?appleMobileEmbed=1",
-    );
-    expect(link.getAttribute("target")).toBe("_blank");
-    expect(screen.queryByLabelText("Expand immersive view")).toBeNull();
-  });
-
-  it("navigates to the canonical immersive route when embed fullscreen is rejected", async () => {
+  it("falls back to in-frame focus mode when embed fullscreen is rejected", async () => {
     const user = userEvent.setup();
     const requestFullscreen = vi.fn(() => Promise.reject(new Error("Rejected")));
-    const navigateToCanonicalHref = vi.fn();
 
     render(
       <StatefulImmersiveRouteShell
         isEmbedMode
         requestFullscreen={requestFullscreen}
-        canonicalHref="https://fornesusart.com/immersive/pieces/7"
-        navigateToCanonicalHref={navigateToCanonicalHref}
       />,
     );
 
     await user.click(screen.getByLabelText("Expand immersive view"));
 
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
-    expect(navigateToCanonicalHref).toHaveBeenCalledWith(
-      "https://fornesusart.com/immersive/pieces/7",
-    );
-    expect(screen.queryByTestId("fullscreen-scene")).toBeNull();
-    expect(screen.getByTestId("immersive-embed-root")).toBeTruthy();
+    expect(screen.getByTestId("fullscreen-scene")).toBeTruthy();
+    expect(screen.getByLabelText("Return to gallery view")).toBeTruthy();
+    expect(screen.getByTestId("immersive-embed-expanded-root").className).toContain("fixed");
   });
 
   it("lets embed focus mode exit cleanly after fullscreen fallback", async () => {
