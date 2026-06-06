@@ -908,7 +908,10 @@ export function ExhibitWallContent({
     />
   ),
 }: ExhibitWallContentProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return searchParams.get("fullscreen") === "1";
+  });
   const metadataFields: Array<{ label: string; value: string }> = [];
 
   if (artistStatement) {

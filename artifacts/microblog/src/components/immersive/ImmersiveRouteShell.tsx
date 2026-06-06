@@ -211,8 +211,6 @@ export function ImmersiveRouteShell({
   const [isEmbedFullscreen, setIsEmbedFullscreen] = useState(false);
   const [isEmbedFocusMode, setIsEmbedFocusMode] = useState(false);
   const isEmbedExpanded = isEmbedFullscreen || isEmbedFocusMode;
-  const shouldHideIPhoneEmbedControl =
-    enableIPhoneEmbedLauncher && isEmbedMode && isIPhoneWebKitBrowser();
 
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
@@ -317,6 +315,23 @@ export function ImmersiveRouteShell({
 
   if (isEmbedMode) {
     async function handleEmbedToggle() {
+      if (isIPhoneWebKitBrowser()) {
+        const targetUrl = new URL(canonicalHref || window.location.href, window.location.origin);
+        targetUrl.searchParams.set("fullscreen", "1");
+        const redirectStr = targetUrl.toString();
+
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.assign(redirectStr);
+            return;
+          }
+        } catch {
+          // Top navigation is blocked (e.g. strict cross-origin iframe sandbox rules)
+        }
+        window.open(redirectStr, "_blank", "noopener,noreferrer");
+        return;
+      }
+
       if (isEmbedExpanded) {
         if (document.fullscreenElement === embedContainerRef.current) {
           try {
@@ -359,7 +374,15 @@ export function ImmersiveRouteShell({
           <div className="pointer-events-auto absolute bottom-4 right-4 z-20 flex items-center gap-2">
             {canonicalHref && !showEmbedFullscreenControl ? (
               <a
-                href={canonicalHref}
+                href={(() => {
+                  try {
+                    const u = new URL(canonicalHref, window.location.origin);
+                    u.searchParams.set("fullscreen", "1");
+                    return u.toString();
+                  } catch {
+                    return canonicalHref;
+                  }
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Open in immersive view"
@@ -369,7 +392,7 @@ export function ImmersiveRouteShell({
                 <span aria-hidden="true">VR</span>
               </a>
             ) : null}
-            {showEmbedFullscreenControl && !shouldHideIPhoneEmbedControl ? (
+            {showEmbedFullscreenControl ? (
               <FullscreenToggleButton
                 isFullscreen={isEmbedExpanded}
                 onToggle={handleEmbedToggle}

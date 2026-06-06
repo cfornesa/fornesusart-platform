@@ -174,7 +174,10 @@ export default function ImmersiveImagePage() {
   const [, params] = useRoute("/immersive/images/:encodedRef");
   const goBack = useReturnToPrevious();
   const [error, setError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return searchParams.get("fullscreen") === "1";
+  });
   const encodedRef = params?.encodedRef ?? "";
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const metadata = useMemo(() => readImmersiveImageMetadata(searchParams), [searchParams]);

@@ -1103,7 +1103,10 @@ export default function ImmersivePiecePage() {
   const [, params] = useRoute("/immersive/pieces/:id");
   const goBack = useReturnToPrevious();
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return searchParams.get("fullscreen") === "1";
+  });
   const pieceId = Number(params?.id);
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const versionRaw = searchParams.get("version");

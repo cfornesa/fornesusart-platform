@@ -189,6 +189,9 @@
 2026-05-02 · TENSION · Wants the site's visual identity to be both opinionated (one strong default) and flexible (easily swappable across nine looks without writing code). This is a real tension between brand discipline and self-publishing autonomy that future visual decisions must navigate.
     [Surfaced through the request to ship per-theme structural changes, not just a palette switcher. Confirmed 2026-05-02.]
 
+2026-06-06 · DIRECTION · Prefers promotion to a full-screen same-tab canonical view for iPhone embeds over trapped in-frame focus fallbacks or completely hiding the launcher controls.
+    [Surfaced when selecting Option 1 for iPhone VR/immersive embed escape behavior.]
+
 ---
 
 <!-- The agent holds the brush. You choose what gets painted.

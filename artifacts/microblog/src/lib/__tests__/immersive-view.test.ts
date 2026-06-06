@@ -38,7 +38,7 @@ describe("immersive-view helpers", () => {
 
   it("builds interactive embeds from the immersive route contract", () => {
     expect(buildPieceGalleryEmbedHtml(7, 9, "Orbit Bloom")).toBe(
-      '<iframe src="http://localhost:3000/immersive/pieces/7?embed=1&version=9" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="Orbit Bloom" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>',
+      '<iframe src="http://localhost:3000/immersive/pieces/7?embed=1&version=9" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="Orbit Bloom" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>',
     );
   });
 });

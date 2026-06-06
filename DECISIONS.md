@@ -34,6 +34,27 @@ options regardless of session context. -->
 
 ---
 
+## 2026-06-06 — iPhone Immersive IFrame Escape via Same-Tab Top-Navigation Redirect
+
+### Trigger
+On iOS iPhones, browsers (Safari and WebKit-based) do not support the HTML5 Fullscreen API (`element.requestFullscreen()`) on arbitrary DOM elements (such as `div` wrapper containers). When an art piece, image, or exhibit is embedded in a sandboxed `<iframe>` on an external page, triggering the fullscreen control resulted in a broken, clipped, or missing experience on iPhones because the fallback "Focus Mode" CSS layout was trapped inside the iframe bounds.
+
+### Decisions Confirmed
+- **Option 1 (Same-Tab Top-Navigation Escape)** is chosen as the default resolution for iPhone embeds.
+- The iframe sandbox contract for copied interactive/gallery embeds is updated to include `allow-top-navigation-by-user-activation`, `allow-popups`, and `allow-popups-to-escape-sandbox`.
+- This sandbox policy is automatically normalized at render time inside first-party post content rendering (`PostContent.tsx`) for both pieces and exhibits, ensuring existing posts inherit the fix dynamically.
+- When in embed mode (`isEmbedMode`) on an iPhone (`isIPhoneWebKitBrowser()`), clicking the fullscreen/expand control now redirects the top-level parent window to the canonical immersive route with `?fullscreen=1` appended.
+- If top navigation is blocked by cross-origin security rules or strict host-side sandbox configurations, it falls back to escaping via a new browser tab (`window.open`).
+- The direct immersive views (`immersive-piece.tsx`, `immersive-image.tsx`, and `immersive-exhibit-wall.tsx`) are updated to initialize their `isFullscreen` state to `true` if `fullscreen=1` is specified in the URL query string, giving iPhone users a true immediate full-viewport experience.
+- When `fullscreen=1` directs them to the fullscreen layout, exiting fullscreen transitions back to the normal stacked page details (with Back button, metadata, etc.) rather than leaving the page entirely.
+- For static/no-fullscreen embeds, the "VR" button is updated to automatically append `?fullscreen=1` so that launching the immersive view opens directly in fullscreen.
+
+### Outcome
+- iPhone users visiting pages with embedded interactive art pieces, images, or exhibits can now click the fullscreen control and experience a true full-viewport immersive presentation.
+- All unit and integration tests are updated and fully pass.
+
+---
+
 ## 2026-06-05 — Apple-Mobile Safari Immersive Embed Escape + Replit Runtime Preservation
 
 ### Trigger
