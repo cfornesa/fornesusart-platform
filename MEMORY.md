@@ -161,6 +161,15 @@ or rejection. -->
 2026-05-29 · SYNDICATION · Outbound syndication now includes social targets beyond the article-style adapters: Bluesky via handle + App Password, LinkedIn via OAuth, and Facebook/Instagram via a shared Meta OAuth flow. Posts can store `featured_image_url` and JSON `social_post_drafts` for Bluesky, LinkedIn, Facebook, and Instagram; social adapters use those drafts when present and otherwise generate canonical-link text.
     [Documentation recovery entry; verified from `posts.ts`, `platform-oauth.ts`, `admin-platforms.tsx`, and `lib/syndication/{bluesky,linkedin,facebook,instagram,content}.ts`.]
 
+2026-06-05 · AI ROUTE ERROR HANDLING · `decryptAiApiKey` wraps `decryptSecret` in `crypto.ts`, which throws a plain `Error` when the stored encrypted key cannot be read — silently causing a 500. Both the text-generation and describe-image routes in `artifacts/api-server/src/routes/ai.ts` now wrap this call in an isolated try-catch returning a user-facing 409. `logger.error` added at the top of both catch blocks. Fix for end users: re-save the affected vendor API key in Admin → AI.
+    [Verified from `artifacts/api-server/src/routes/ai.ts` and the resolved 500 on POST /api/ai/describe-image.]
+
+2026-06-05 · AI SETTINGS PERSISTENCE · Two bugs caused task-preference settings to require multiple saves: (1) new profiles with temporary string keys produced NaN IDs — fixed by `!d.isNew` in `enabledProfiles` filter in `admin-ai.tsx`; (2) `setQueryData` without `invalidateQueries` left stale cache for late-mounting subscribers — fixed in the `onSuccess` handler.
+    [Verified from `artifacts/microblog/src/pages/admin/admin-ai.tsx`.]
+
+2026-06-05 · AI ERROR SURFACING · All three describe-image error sites swallowed the server message behind a hardcoded fallback. Fixed in `admin-library.tsx`, `FeaturedImagePicker.tsx`, `RichPostEditor.tsx`. Use `getAiFailureMessage` from `components/post/ai-error.ts` as the canonical helper for AI error display.
+    [Verified from the three frontend components and `ai-error.ts`.]
+
 2026-05-29 · AI · Current owner AI vendor IDs are `openrouter`, `opencode-zen`, `opencode-go`, `google`, `mistral`, `mistral-vibe`, and `deepseek`. Task-specific allowlists are enforced: text improvement allows all seven; image alt text excludes DeepSeek; art-piece generation is limited to Google, Mistral AI, Mistral Vibe, and DeepSeek. Mistral Vibe's known-good model is `mistral-vibe-cli-latest`; DeepSeek defaults to `deepseek-v4-flash`.
     [Documentation recovery entry; verified from `ai-settings.ts`, `use-owner-ai-vendors.ts`, `admin-ai.tsx`, `ai-providers.ts`, and `docs/ai-vendor-verification.md`.]
 

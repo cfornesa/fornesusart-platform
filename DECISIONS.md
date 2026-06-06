@@ -34,6 +34,30 @@ options regardless of session context. -->
 
 ---
 
+## 2026-06-05 — AI Image Description Bug Fixes
+
+### Root Causes Identified and Fixed
+
+**500 on `POST /api/ai/describe-image`**
+- `decryptAiApiKey` throws a plain `Error` when the stored encrypted key cannot be decrypted. Neither `AiVisionNotSupportedError` nor `AiProviderError` catches a plain `Error`, so the catch block fell through to the generic 500 branch with no log output.
+- Fix: both the text-generation and describe-image routes now wrap `decryptAiApiKey` in an isolated try-catch returning a 409 with a user-facing message ("The stored API key for [vendor] could not be read. Try re-saving it in Admin → AI."). `logger.error` added at the top of both catch blocks.
+
+**Task preference settings requiring multiple saves + hard refreshes**
+- New unsaved profiles had temporary string keys (`"new-1"`) whose `Number()` = NaN, so `safePref` silently dropped preferences. Fix: `!d.isNew` added to `enabledProfiles` filter in `admin-ai.tsx`.
+- `setQueryData` alone doesn't refetch for late-mounting subscribers. Fix: `invalidateQueries` added after `setQueryData` in the `onSuccess` handler.
+
+**Frontend swallowing server error messages**
+- All three describe-image call sites showed a hardcoded "Could not generate alt text." toast. Fixed to surface `error?.data?.error` (or use `getAiFailureMessage`) before falling back.
+
+### Files Changed
+- `artifacts/api-server/src/routes/ai.ts` — `decryptAiApiKey` try-catch + `logger.error` in both catch blocks.
+- `artifacts/microblog/src/pages/admin/admin-ai.tsx` — `!d.isNew` filter + `invalidateQueries`.
+- `artifacts/microblog/src/pages/admin/admin-library.tsx` — surface server error in toast.
+- `artifacts/microblog/src/components/media/FeaturedImagePicker.tsx` — surface server error in toast.
+- `artifacts/microblog/src/components/post/RichPostEditor.tsx` — use `getAiFailureMessage` in describe-image catch.
+
+---
+
 ## 2026-05-08 — Blog URL Scoping for OAuth Platforms + Optional Post Title Field
 
 ### Workstream A — Blog URL per OAuth Platform
