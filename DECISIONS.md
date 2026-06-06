@@ -34,6 +34,27 @@ options regardless of session context. -->
 
 ---
 
+## 2026-06-06 — iPhone Progressive Web Component Embed with IFrame Fallback
+
+### Trigger
+While the same-tab redirect (Option 1) provided an escape for iframe embeds on iPhones under standard sandbox configurations, stricter hosting environments (such as publishers that enforce strict iframe sandboxes without `allow-top-navigation-by-user-activation` or `allow-popups`) completely blocked top-navigation changes and popups. This resulted in the launcher button remaining unclickable or non-functional.
+
+### Decisions Confirmed
+- **Route B (Web Component script embed)** is implemented as the primary interactive embed mechanism for art pieces.
+- The default copied embed code in `/immersive/pieces/:id` is changed to a unified progressive enhancement snippet: a `<creatr-art-piece>` Web Component wrapper containing a fallback `<iframe>`, paired with the `<script src="/embed.js" defer></script>` tag.
+- When JavaScript is enabled and the script loads successfully, `<creatr-art-piece>` immediately removes the fallback `<iframe>` from the light DOM during its initialization lifecycle hook (`connectedCallback`) to save network resources and prevent double rendering.
+- The Web Component renders the art piece directly inside a Shadow DOM, shielding host styles from leakage. Because it runs directly in the parent DOM, it supports same-page immersive fullscreen layouts via a CSS fixed-viewport overlay on iOS iPhones.
+- **Route A (IFrame Fallback / Option 3)** serves as the fallback for environments where scripts are blocked (e.g. strict CSPs).
+- Inside the fallback `<iframe>` (running in embed mode), the lower-right fullscreen/VR control is completely hidden on iOS iPhones to prevent displaying a non-functional control.
+- Tests in `ImmersiveRouteShell.test.tsx` and `immersive-view.test.ts` are updated to assert that the control is hidden on iPhone embeds while remaining fully functional on iPads, desktop platforms, and non-embed first-party contexts.
+
+### Outcome
+- Visitors on iPhones embedding art pieces via the new Web Component snippet can view the pieces in full-viewport immersive mode without sandbox restrictions.
+- In iframe-only or strict CSP environments where the script is blocked, the embed degrades gracefully to a standard interactive iframe, hiding the expand button on iPhones.
+- All unit and integration tests are updated and fully pass.
+
+---
+
 ## 2026-06-06 — iPhone Immersive IFrame Escape via Same-Tab Top-Navigation Redirect
 
 ### Trigger

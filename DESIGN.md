@@ -192,6 +192,9 @@
 2026-06-06 · DIRECTION · Prefers promotion to a full-screen same-tab canonical view for iPhone embeds over trapped in-frame focus fallbacks or completely hiding the launcher controls.
     [Surfaced when selecting Option 1 for iPhone VR/immersive embed escape behavior.]
 
+2026-06-06 · DIRECTION · Uses Shadow DOM isolation for interactive Web Component embeds to guarantee design consistency and prevent leakage, while keeping styling aligned with the site's dark aesthetic.
+    [Surfaced when implementing the Shadow DOM based styling and fixed overlay for <creatr-art-piece>.]
+
 ---
 
 <!-- The agent holds the brush. You choose what gets painted.

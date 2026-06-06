@@ -89,12 +89,10 @@ function mockNavigatorUserAgent(userAgent: string, maxTouchPoints = 0) {
 }
 
 describe("ImmersiveRouteShell", () => {
-  it("renders the lower-right embed control on iPhone piece embeds and redirects on click", async () => {
+  it("hides the lower-right embed control on iPhone piece embeds", async () => {
     mockNavigatorUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
-    const user = userEvent.setup();
-    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
     render(
       <StatefulImmersiveRouteShell
@@ -103,16 +101,8 @@ describe("ImmersiveRouteShell", () => {
       />,
     );
 
-    const button = screen.getByLabelText("Expand immersive view");
-    expect(button).toBeTruthy();
-
-    await user.click(button);
-    expect(openSpy).toHaveBeenCalled();
-    const calledUrl = openSpy.mock.calls[0][0];
-    expect(calledUrl).toContain("https://example.com/immersive/pieces/7");
-    expect(calledUrl).toContain("fullscreen=1");
-
-    openSpy.mockRestore();
+    const button = screen.queryByLabelText("Expand immersive view");
+    expect(button).toBeNull();
   });
 
   it("keeps the fullscreen control for iPad embeds", () => {
@@ -405,35 +395,26 @@ describe("ImmersiveRouteShell", () => {
     expect(screen.queryByTestId("fullscreen-scene")).toBeNull();
   });
 
-  it("renders and falls back to window.location if canonicalHref is missing", async () => {
+  it("hides the control on iPhone embeds even if canonicalHref is missing", () => {
     mockNavigatorUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
-    const user = userEvent.setup();
-    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
     render(<StatefulImmersiveRouteShell isEmbedMode />);
 
-    const button = screen.getByLabelText("Expand immersive view");
-    expect(button).toBeTruthy();
-
-    await user.click(button);
-    expect(openSpy).toHaveBeenCalled();
-    const calledUrl = openSpy.mock.calls[0][0];
-    expect(calledUrl).toContain("fullscreen=1");
-
-    openSpy.mockRestore();
+    const button = screen.queryByLabelText("Expand immersive view");
+    expect(button).toBeNull();
   });
 
-  it("keeps the fullscreen control when the iPhone launcher is not enabled", () => {
+  it("renders the fullscreen control on iPhone when NOT in embed mode", () => {
     mockNavigatorUserAgent(
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     );
 
     render(
       <StatefulImmersiveRouteShell
-        isEmbedMode
-        canonicalHref="https://example.com/immersive/images/example"
+        isEmbedMode={false}
+        canonicalHref="https://example.com/immersive/pieces/7"
       />,
     );
 

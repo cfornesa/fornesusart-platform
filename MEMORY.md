@@ -2,6 +2,8 @@
 to the human before proceeding. Do not act on a pending entry — wait for explicit confirmation
 or rejection. -->
 
+2026-06-06 · EMBEDS · The default interactive art piece embed uses a unified progressive enhancement markup (a Custom Element `<creatr-art-piece>` wrapping a fallback `<iframe>` paired with `/embed.js`). On iOS iPhones, standard iframe embeds hide the fullscreen/VR control to prevent non-functional button rendering, while the Web Component removes the fallback and supports direct same-page fullscreen via Shadow DOM and a fixed viewport overlay.
+
 2026-04-28 · PRODUCT · The project direction is an author-owned microblog where only the site owner publishes canonical posts, while signed-in visitors can comment and react.
     [Verified from CONSTRAINTS.md and DECISIONS.md.]
 
