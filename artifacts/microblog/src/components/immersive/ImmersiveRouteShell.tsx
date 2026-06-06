@@ -33,6 +33,8 @@ type ImmersiveRouteShellProps = {
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
   navigateToCanonicalHref?: (href: string) => void;
+  embedOpenHref?: string;
+  embedOpenLabel?: string;
   routeAction?: {
     label: string;
     onClick: () => void;
@@ -198,6 +200,8 @@ export function ImmersiveRouteShell({
   canonicalHref,
   embedCodes,
   navigateToCanonicalHref,
+  embedOpenHref,
+  embedOpenLabel = "Open immersive view",
   routeAction,
 }: ImmersiveRouteShellProps) {
   const routeContainerRef = useRef<HTMLDivElement>(null);
@@ -329,6 +333,18 @@ export function ImmersiveRouteShell({
   }
 
   if (isEmbedMode) {
+    const embedOpenControl = embedOpenHref ? (
+      <a
+        href={embedOpenHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={embedOpenLabel}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-black/55 text-white shadow-lg backdrop-blur transition hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >
+        <Maximize2 className="h-5 w-5" />
+      </a>
+    ) : null;
+
     async function handleEmbedToggle() {
       if (isEmbedExpanded) {
         if (document.fullscreenElement === embedContainerRef.current) {
@@ -340,6 +356,11 @@ export function ImmersiveRouteShell({
           return;
         }
         setIsEmbedFocusMode(false);
+        return;
+      }
+
+      if (embedOpenHref) {
+        window.open(embedOpenHref, "_blank", "noopener,noreferrer");
         return;
       }
 
@@ -382,7 +403,8 @@ export function ImmersiveRouteShell({
                 <span aria-hidden="true">VR</span>
               </a>
             ) : null}
-            {showEmbedFullscreenControl ? (
+            {showEmbedFullscreenControl && embedOpenControl ? embedOpenControl : null}
+            {showEmbedFullscreenControl && !embedOpenControl ? (
               <FullscreenToggleButton
                 isFullscreen={isEmbedExpanded}
                 onToggle={handleEmbedToggle}

@@ -6,7 +6,7 @@ export type ImmersiveImageMetadata = {
 
 const RESPONSIVE_EMBED_IFRAME_STYLE = "width:100%;aspect-ratio:16 / 9;display:block;";
 export const INTERACTIVE_IMMERSIVE_EMBED_SANDBOX =
-  "allow-scripts allow-same-origin allow-top-navigation-by-user-activation";
+  "allow-scripts allow-same-origin allow-top-navigation-by-user-activation allow-popups allow-popups-to-escape-sandbox";
 export const APPLE_MOBILE_EMBED_QUERY_KEY = "appleMobileEmbed";
 
 const IMAGE_QUERY_KEYS = {

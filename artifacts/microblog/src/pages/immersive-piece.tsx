@@ -1114,6 +1114,7 @@ export default function ImmersivePiecePage() {
   const isEmbedMode = searchParams.get("embed") === "1";
   const isStaticEmbed = searchParams.get("static") === "1";
   const isAppleMobileEmbedEscape = searchParams.get(APPLE_MOBILE_EMBED_QUERY_KEY) === "1";
+  const isAppleMobileSafariRuntime = useMemo(() => isAppleMobileSafari(), []);
   const siteHomeUrl = useMemo(() => {
     const bootstrapValue = (window as any).__SITE_HOME_URL__;
     if (typeof bootstrapValue === "string" && bootstrapValue.trim()) {
@@ -1141,11 +1142,19 @@ export default function ImmersivePiecePage() {
     ),
     [isAppleMobileEmbedEscape, siteHomeUrl],
   );
+  const appleMobileEmbedOpenHref = useMemo(
+    () => (
+      isEmbedMode && !isStaticEmbed && isAppleMobileSafariRuntime
+        ? buildAppleMobileImmersivePieceHref(canonicalHref)
+        : undefined
+    ),
+    [canonicalHref, isAppleMobileSafariRuntime, isEmbedMode, isStaticEmbed],
+  );
   const navigateToCanonicalHref = useMemo(
     () => (
       isEmbedMode
         ? (href: string) => {
-            if (isAppleMobileSafari()) {
+            if (isAppleMobileSafariRuntime) {
               window.open(
                 buildAppleMobileImmersivePieceHref(href),
                 "_blank",
@@ -1165,7 +1174,7 @@ export default function ImmersivePiecePage() {
           }
         : undefined
     ),
-    [isEmbedMode],
+    [isAppleMobileSafariRuntime, isEmbedMode],
   );
 
   const { data, isLoading, error } = useGetEmbeddedArtPiece(
@@ -1246,6 +1255,8 @@ export default function ImmersivePiecePage() {
       isEmbedMode={isEmbedMode}
       showEmbedFullscreenControl={!isStaticEmbed}
       canonicalHref={canonicalHref}
+      embedOpenHref={appleMobileEmbedOpenHref}
+      embedOpenLabel={appleMobileEmbedOpenHref ? "Open immersive view in a new tab" : undefined}
       navigateToCanonicalHref={navigateToCanonicalHref}
       embedCodes={{
         plain: { label: "Embed Piece", code: plainEmbedCode },

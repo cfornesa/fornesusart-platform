@@ -21,6 +21,8 @@ function StatefulImmersiveRouteShell({
   isEmbedMode = false,
   canonicalHref,
   navigateToCanonicalHref,
+  embedOpenHref,
+  embedOpenLabel,
   routeAction,
 }: {
   requestFullscreen?: (this: HTMLElement) => Promise<void>;
@@ -28,6 +30,8 @@ function StatefulImmersiveRouteShell({
   isEmbedMode?: boolean;
   canonicalHref?: string;
   navigateToCanonicalHref?: (href: string) => void;
+  embedOpenHref?: string;
+  embedOpenLabel?: string;
   routeAction?: { label: string; onClick: () => void; kind?: "back" | "home" };
 } = {}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -53,6 +57,8 @@ function StatefulImmersiveRouteShell({
       isEmbedMode={isEmbedMode}
       canonicalHref={canonicalHref}
       navigateToCanonicalHref={navigateToCanonicalHref}
+      embedOpenHref={embedOpenHref}
+      embedOpenLabel={embedOpenLabel}
       routeAction={routeAction}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       renderScene={({ fullscreen }) => (
@@ -308,6 +314,23 @@ describe("ImmersiveRouteShell", () => {
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("fullscreen-scene")).toBeTruthy();
     expect(screen.getByTestId("immersive-embed-expanded-root").className).toContain("fixed");
+  });
+
+  it("renders a direct new-tab control for embed escape when embedOpenHref is provided", () => {
+    render(
+      <StatefulImmersiveRouteShell
+        isEmbedMode
+        embedOpenHref="https://fornesusart.com/immersive/pieces/7?appleMobileEmbed=1"
+        embedOpenLabel="Open immersive view in a new tab"
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: "Open immersive view in a new tab" });
+    expect(link.getAttribute("href")).toBe(
+      "https://fornesusart.com/immersive/pieces/7?appleMobileEmbed=1",
+    );
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(screen.queryByLabelText("Expand immersive view")).toBeNull();
   });
 
   it("navigates to the canonical immersive route when embed fullscreen is rejected", async () => {
