@@ -46,6 +46,8 @@ While the progressive Web Component embed (`<creatr-art-piece>`) resolved iPhone
 - In `ImmersiveRouteShell.tsx`, if the child iframe detects it is running inside our Web Component wrapper (`hasWrapper` is true), the fullscreen control button is displayed on iPhones instead of being hidden.
 - Clicking the control on iPhone when wrapped sends a `creatr-toggle-fullscreen` message to the parent wrapper.
 - The parent wrapper handles this message by toggling a `.fullscreen` CSS class on itself, styling it to fixed-viewport on the host page. The slotted `<iframe>` (styled to `100%` width and height) automatically expands to fill the viewport, bypassing iframe sandboxing/clipping bounds.
+- Responsive scaling is added to both the fallback iframe style and the custom elements' `:host` stylesheets by setting a `min-height: 300px` alongside `aspect-ratio: 16 / 9` to guarantee usability and prevent button overlapping on narrow mobile viewports.
+- The fullscreen custom element styling uses Dynamic Viewport Units (`100dvh`/`100dvw`), and the control button container uses safe area inset environment variables (`env(safe-area-inset-bottom)` / `env(safe-area-inset-right)`) to prevent notch clipping and browser toolbar overlay blocks.
 - All unit and integration tests are updated and fully pass.
 
 ### Outcome

@@ -4,7 +4,7 @@ export type ImmersiveImageMetadata = {
   caption?: string | null;
 };
 
-const RESPONSIVE_EMBED_IFRAME_STYLE = "width:100%;aspect-ratio:16 / 9;display:block;";
+const RESPONSIVE_EMBED_IFRAME_STYLE = "width:100%;aspect-ratio:16 / 9;min-height:300px;display:block;";
 
 const IMAGE_QUERY_KEYS = {
   alt: "alt",

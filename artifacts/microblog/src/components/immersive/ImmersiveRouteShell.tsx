@@ -404,7 +404,7 @@ export function ImmersiveRouteShell({
       >
         {renderScene({ fullscreen: isEmbedExpanded, isMobile: false })}
         <div className="pointer-events-none absolute inset-0 z-10">
-          <div className="pointer-events-auto absolute bottom-4 right-4 z-20 flex items-center gap-2">
+          <div className="pointer-events-auto absolute bottom-[calc(1rem+env(safe-area-inset-bottom))] right-[calc(1rem+env(safe-area-inset-right))] z-20 flex items-center gap-2">
             {!(isEmbedMode && isIPhoneWebKitBrowser() && !hasWrapper) && (
               <>
                 {canonicalHref && !showEmbedFullscreenControl ? (

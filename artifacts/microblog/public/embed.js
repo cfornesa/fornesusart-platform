@@ -91,6 +91,7 @@
             position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
+            min-height: 300px;
             overflow: hidden;
             background: #0a0a14;
             border-radius: 12px;
@@ -101,7 +102,9 @@
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
+            width: 100dvw !important;
             height: 100vh !important;
+            height: 100dvh !important;
             z-index: 9999999 !important;
             border-radius: 0 !important;
             border: none !important;
@@ -371,6 +374,7 @@
             position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
+            min-height: 300px;
             overflow: hidden;
             background: #0a0a14;
             border-radius: 12px;
@@ -381,7 +385,9 @@
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
+            width: 100dvw !important;
             height: 100vh !important;
+            height: 100dvh !important;
             z-index: 9999999 !important;
             border-radius: 0 !important;
             border: none !important;
@@ -442,6 +448,7 @@
             position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
+            min-height: 300px;
             overflow: hidden;
             background: #0a0a14;
             border-radius: 12px;
@@ -452,7 +459,9 @@
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
+            width: 100dvw !important;
             height: 100vh !important;
+            height: 100dvh !important;
             z-index: 9999999 !important;
             border-radius: 0 !important;
             border: none !important;
