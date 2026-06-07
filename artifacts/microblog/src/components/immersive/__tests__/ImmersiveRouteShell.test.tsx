@@ -440,15 +440,11 @@ describe("ImmersiveRouteShell", () => {
     );
     const user = userEvent.setup();
 
-    // Mock window.parent and window.top as the same object to simulate a single iframe wrapper
+    // Mock window.parent as a separate object to trigger window.parent !== window
     const parentMock = {
       postMessage: vi.fn(),
     };
     Object.defineProperty(window, "parent", {
-      configurable: true,
-      value: parentMock,
-    });
-    Object.defineProperty(window, "top", {
       configurable: true,
       value: parentMock,
     });

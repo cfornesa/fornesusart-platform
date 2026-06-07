@@ -336,14 +336,7 @@ export function ImmersiveRouteShell({
   if (isEmbedMode) {
     async function handleEmbedToggle() {
       if (isIPhoneWebKitBrowser()) {
-        let isNestedIframe = false;
-        try {
-          isNestedIframe = window.parent !== window.top;
-        } catch {
-          isNestedIframe = true;
-        }
-
-        if (hasWrapper && !isNestedIframe) {
+        if (hasWrapper) {
           try {
             if (window.parent && window.parent !== window) {
               window.parent.postMessage(
@@ -360,26 +353,15 @@ export function ImmersiveRouteShell({
         targetUrl.searchParams.set("fullscreen", "1");
         const redirectStr = targetUrl.toString();
 
-        let opened = false;
         try {
-          const win = window.open(redirectStr, "_blank", "noopener,noreferrer");
-          if (win) {
-            opened = true;
+          if (window.top && window.top !== window) {
+            window.top.location.assign(redirectStr);
+            return;
           }
-        } catch {}
-
-        if (!opened) {
-          try {
-            if (window.top && window.top !== window) {
-              window.top.location.href = redirectStr;
-              opened = true;
-            }
-          } catch {}
+        } catch {
+          // Top navigation is blocked (e.g. strict cross-origin iframe sandbox rules)
         }
-
-        if (!opened) {
-          window.location.href = redirectStr;
-        }
+        window.open(redirectStr, "_blank", "noopener,noreferrer");
         return;
       }
 
