@@ -130,7 +130,7 @@ export function buildPieceGalleryEmbedHtml(
   versionId: number | null | undefined,
   title: string,
   origin = window.location.origin,
-  variant?: "custom" | "cms",
+  variant?: "custom" | "cms" | "adaptive",
 ): string {
   const params = new URLSearchParams({ embed: "1" });
   if (versionId && Number.isFinite(versionId) && versionId > 0) {
@@ -138,6 +138,9 @@ export function buildPieceGalleryEmbedHtml(
   }
   if (variant === "cms") {
     params.set("cms", "1");
+  }
+  if (variant === "adaptive") {
+    params.set("adaptive", "1");
   }
   const src = `${origin}/immersive/pieces/${pieceId}?${params}`;
   const safeTitle = title.replace(/"/g, "&quot;");
@@ -150,7 +153,7 @@ export function buildImageGalleryEmbedHtml(
   encodedRef: string,
   metadata: ImmersiveImageMetadata,
   origin = window.location.origin,
-  variant?: "custom" | "cms",
+  variant?: "custom" | "cms" | "adaptive",
 ): string {
   const params = new URLSearchParams({ embed: "1" });
   if (metadata.alt?.trim()) params.set("alt", metadata.alt.trim());
@@ -158,6 +161,9 @@ export function buildImageGalleryEmbedHtml(
   if (metadata.caption?.trim()) params.set("caption", metadata.caption.trim());
   if (variant === "cms") {
     params.set("cms", "1");
+  }
+  if (variant === "adaptive") {
+    params.set("adaptive", "1");
   }
   const src = `${origin}/immersive/images/${encodedRef}?${params}`;
   const safeTitle = (metadata.title || metadata.alt || "Immersive image").replace(/"/g, "&quot;");
@@ -197,11 +203,14 @@ export function buildExhibitGalleryEmbedHtml(
   slug: string,
   name: string,
   origin = window.location.origin,
-  variant?: "custom" | "cms",
+  variant?: "custom" | "cms" | "adaptive",
 ): string {
   const params = new URLSearchParams({ embed: "1" });
   if (variant === "cms") {
     params.set("cms", "1");
+  }
+  if (variant === "adaptive") {
+    params.set("adaptive", "1");
   }
   const src = `${origin}/immersive/exhibits/${slug}?${params}`;
   const safeTitle = name.replace(/"/g, "&quot;");

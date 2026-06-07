@@ -1114,6 +1114,7 @@ export default function ImmersivePiecePage() {
   const isEmbedMode = searchParams.get("embed") === "1";
   const isStaticEmbed = searchParams.get("static") === "1";
   const isCmsEmbed = searchParams.get("cms") === "1";
+  const isAdaptiveEmbed = searchParams.get("adaptive") === "1";
 
   const canonicalHref = useMemo(
     () => `${window.location.origin}${buildImmersivePieceHref(pieceId, versionId)}`,
@@ -1185,6 +1186,7 @@ export default function ImmersivePiecePage() {
   const plainEmbedCode = `<iframe src="${window.location.origin}/embed/pieces/${pieceId}${versionId ? `?version=${versionId}` : ""}" width="100%" style="width:100%;aspect-ratio:16 / 9;display:block;" title="${title.replace(/"/g, "&quot;")}" frameborder="0" loading="lazy" sandbox="allow-scripts allow-same-origin"></iframe>`;
   const galleryEmbedCode = buildPieceGalleryEmbedHtml(pieceId, versionId, title, window.location.origin);
   const galleryCmsEmbedCode = buildPieceGalleryEmbedHtml(pieceId, versionId, title, window.location.origin, "cms");
+  const galleryAdaptiveEmbedCode = buildPieceGalleryEmbedHtml(pieceId, versionId, title, window.location.origin, "adaptive");
 
   return (
     <ImmersiveRouteShell
@@ -1194,12 +1196,14 @@ export default function ImmersivePiecePage() {
       isEmbedMode={isEmbedMode}
       showEmbedFullscreenControl={!isStaticEmbed}
       suppressFullscreenControlOnIPhone={isCmsEmbed}
+      adaptiveFullscreenControlOnIPhone={isAdaptiveEmbed}
       canonicalHref={canonicalHref}
       enableIPhoneEmbedLauncher
       embedCodes={{
         plain: { label: "Embed Piece", code: plainEmbedCode },
         gallery: { label: "Embed Interactive (Custom)", code: galleryEmbedCode },
         galleryCms: { label: "Embed Interactive (CMS)", code: galleryCmsEmbedCode },
+        galleryAdaptive: { label: "Embed Interactive (Adaptive)", code: galleryAdaptiveEmbedCode },
       }}
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       metadataCard={
