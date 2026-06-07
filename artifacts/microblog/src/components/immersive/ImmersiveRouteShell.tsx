@@ -227,13 +227,27 @@ export function ImmersiveRouteShell({
         setIsEmbedFocusMode(false);
       }
     }
+    function announceReady() {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "creatr-iframe-ready" }, "*");
+        }
+      } catch {}
+    }
     window.addEventListener("message", handleMessage);
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: "creatr-iframe-ready" }, "*");
-      }
-    } catch {}
-    return () => window.removeEventListener("message", handleMessage);
+    announceReady();
+    // Heavier CMS pages can load embed.js (deferred) well after this iframe
+    // mounts, so the wrapper element may not exist yet for the first
+    // announcement. Re-announce for a bounded window so a late-defined
+    // wrapper still completes the handshake instead of leaving hasWrapper
+    // permanently false.
+    const retryIntervalId = window.setInterval(announceReady, 800);
+    const retryTimeoutId = window.setTimeout(() => window.clearInterval(retryIntervalId), 20000);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.clearInterval(retryIntervalId);
+      window.clearTimeout(retryTimeoutId);
+    };
   }, [isEmbedMode]);
 
   useEffect(() => {
@@ -347,6 +361,26 @@ export function ImmersiveRouteShell({
               return;
             }
           } catch {}
+        }
+
+        // No wrapper connected (e.g. the CMS stripped the embed's <script>
+        // tag, so embed.js never defined creatr-* on the parent page). Try
+        // native fullscreen on this element directly before resorting to
+        // navigation: the generated <iframe> already carries
+        // allowfullscreen/allow="fullscreen", and unlike CSS position:fixed,
+        // the Fullscreen API can promote the element to cover the entire
+        // physical screen even though it lives inside an iframe.
+        const embedTarget = embedContainerRef.current;
+        if (embedTarget && typeof embedTarget.requestFullscreen === "function") {
+          try {
+            await requestElementFullscreen(embedTarget);
+            setIsEmbedFocusMode(false);
+            return;
+          } catch {
+            // Fullscreen unavailable inside this iframe (e.g. the CMS's own
+            // wrapper iframe doesn't delegate the fullscreen permission) —
+            // fall through to the navigation-based escape hatch below.
+          }
         }
 
         const targetUrl = new URL(canonicalHref || window.location.href, window.location.origin);
