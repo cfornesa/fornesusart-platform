@@ -25,6 +25,26 @@
     });
   }
 
+  function promoteToBody(el) {
+    if (el.placeholder) return;
+    el.placeholder = document.createElement("div");
+    el.placeholder.style.display = "none";
+    el.placeholder.dataset.creatrPlaceholder = "true";
+    el.parentNode.insertBefore(el.placeholder, el);
+    el.isRelocating = true;
+    document.body.appendChild(el);
+  }
+
+  function demoteFromBody(el) {
+    if (!el.placeholder) return;
+    el.isRelocating = true;
+    if (el.placeholder.parentNode) {
+      el.placeholder.parentNode.insertBefore(el, el.placeholder);
+    }
+    el.placeholder.remove();
+    el.placeholder = null;
+  }
+
   class CreatrArtPiece extends HTMLElement {
     constructor() {
       super();
@@ -35,6 +55,11 @@
     }
 
     async connectedCallback() {
+      if (this.isRelocating) {
+        this.isRelocating = false;
+        return;
+      }
+
       // Remove fallback iframe to prevent double rendering and save resources
       const fallback = this.querySelector("iframe");
       if (fallback) {
@@ -42,6 +67,8 @@
       }
 
       document.addEventListener("fullscreenchange", this.handleFullscreenChange);
+
+      if (this.isRendered) return;
 
       const pieceId = this.getAttribute("piece-id");
       if (!pieceId) {
@@ -78,6 +105,7 @@
     }
 
     disconnectedCallback() {
+      if (this.isRelocating) return;
       if (this.cleanup) {
         try { this.cleanup(); } catch (e) {}
       }
@@ -89,6 +117,7 @@
       const isNativeFs = document.fullscreenElement === this;
       if (!isNativeFs && this.isFullscreen) {
         this.isFullscreen = false;
+        demoteFromBody(this);
         this.classList.remove("fullscreen");
         document.body.style.overflow = "";
         const btn = this.shadowRoot.querySelector(".fullscreen-btn");
@@ -210,6 +239,7 @@
                 </svg>
               `;
             }).catch(() => {
+              promoteToBody(this);
               this.classList.add("fullscreen");
               btn.innerHTML = `
                 <svg viewBox="0 0 24 24">
@@ -219,6 +249,7 @@
               document.body.style.overflow = "hidden";
             });
           } else {
+            promoteToBody(this);
             this.classList.add("fullscreen");
             btn.innerHTML = `
               <svg viewBox="0 0 24 24">
@@ -231,6 +262,7 @@
           if (document.fullscreenElement === this) {
             document.exitFullscreen().catch(() => {});
           }
+          demoteFromBody(this);
           this.classList.remove("fullscreen");
           btn.innerHTML = `
             <svg viewBox="0 0 24 24">
@@ -428,6 +460,7 @@
           sketchFactory();
         }
       }
+      this.isRendered = true;
     }
   }
 
@@ -477,11 +510,16 @@
     }
 
     connectedCallback() {
+      if (this.isRelocating) {
+        this.isRelocating = false;
+        return;
+      }
       window.addEventListener("message", this.handleMessage);
       document.addEventListener("fullscreenchange", this.handleFullscreenChange);
     }
 
     disconnectedCallback() {
+      if (this.isRelocating) return;
       window.removeEventListener("message", this.handleMessage);
       document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
       document.body.style.overflow = "";
@@ -491,6 +529,7 @@
       const isNativeFs = document.fullscreenElement === this;
       const iframe = this.querySelector("iframe");
       if (!isNativeFs && this.classList.contains("fullscreen")) {
+        demoteFromBody(this);
         this.classList.remove("fullscreen");
         document.body.style.overflow = "";
         if (iframe && iframe.contentWindow) {
@@ -515,10 +554,12 @@
             this.requestFullscreen().then(() => {
               this.classList.add("fullscreen");
             }).catch(() => {
+              promoteToBody(this);
               this.classList.add("fullscreen");
               document.body.style.overflow = "hidden";
             });
           } else {
+            promoteToBody(this);
             this.classList.add("fullscreen");
             document.body.style.overflow = "hidden";
           }
@@ -526,6 +567,7 @@
           if (document.fullscreenElement === this) {
             document.exitFullscreen().catch(() => {});
           }
+          demoteFromBody(this);
           this.classList.remove("fullscreen");
           document.body.style.overflow = "";
         }
@@ -580,11 +622,16 @@
     }
 
     connectedCallback() {
+      if (this.isRelocating) {
+        this.isRelocating = false;
+        return;
+      }
       window.addEventListener("message", this.handleMessage);
       document.addEventListener("fullscreenchange", this.handleFullscreenChange);
     }
 
     disconnectedCallback() {
+      if (this.isRelocating) return;
       window.removeEventListener("message", this.handleMessage);
       document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
       document.body.style.overflow = "";
@@ -594,6 +641,7 @@
       const isNativeFs = document.fullscreenElement === this;
       const iframe = this.querySelector("iframe");
       if (!isNativeFs && this.classList.contains("fullscreen")) {
+        demoteFromBody(this);
         this.classList.remove("fullscreen");
         document.body.style.overflow = "";
         if (iframe && iframe.contentWindow) {
@@ -618,10 +666,12 @@
             this.requestFullscreen().then(() => {
               this.classList.add("fullscreen");
             }).catch(() => {
+              promoteToBody(this);
               this.classList.add("fullscreen");
               document.body.style.overflow = "hidden";
             });
           } else {
+            promoteToBody(this);
             this.classList.add("fullscreen");
             document.body.style.overflow = "hidden";
           }
@@ -629,6 +679,7 @@
           if (document.fullscreenElement === this) {
             document.exitFullscreen().catch(() => {});
           }
+          demoteFromBody(this);
           this.classList.remove("fullscreen");
           document.body.style.overflow = "";
         }

@@ -34,24 +34,27 @@ options regardless of session context. -->
 
 ---
 
-## 2026-06-06 — Pure Native Fullscreen inside IFrame for Non-iPhone Embeds
+## 2026-06-06 — Pure Native Fullscreen inside IFrame for Non-iPhone Embeds + DOM Relocation Fallback for iOS
 
 ### Trigger
-On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibits, and art pieces) experienced layout clipping and offset regressions when toggling fullscreen. This occurred because using a postMessage message channel to trigger native fullscreen on the parent page asynchronously loses user activation, causing it to fall back to CSS fixed positioning, which gets trapped and cropped inside transformed host-page ancestor containers.
+On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibits, and art pieces) experienced layout clipping and offset regressions when toggling fullscreen. This occurred because using a postMessage message channel to trigger native fullscreen on the parent page asynchronously loses user activation, causing it to fall back to CSS fixed positioning, which gets trapped and cropped inside transformed host-page ancestor containers. Additionally, on iPhone/iOS Safari (where native element fullscreen is unsupported), the CSS fixed positioning fallback was also trapped and cropped by transformed containers on host sites (such as Hostinger template containers).
 
 ### Decisions Confirmed
 - **Pure IFrame Native Fullscreen** is used as the primary fullscreen pathway on all non-iPhone devices (desktop, Android, iPad).
 - Clicking the immersive fullscreen control inside the iframe synchronously requests native element fullscreen on the container (`embedContainerRef.current`) inside the iframe itself. This preserves the user activation context, ensuring the browser permits native fullscreen.
 - By entering native fullscreen inside the iframe, the browser promotes the element directly to the top layer, completely bypassing all ancestor transforms, perspectives, and overflow clipping constraints on the host page.
 - On iPhone Safari (which lacks native element fullscreen support), the control continues to fall back to the postMessage parent wrapper toggle (which applies a CSS fixed overlay to the host page) or top-level redirect.
+- To prevent the CSS fixed overlay from getting trapped and cut off by host page ancestor container transforms on iPhone/iOS, `embed.js` implements a dynamic **DOM Promotion/Demotion** fallback. When entering fullscreen, the custom element is detached and appended directly as a child of `document.body` (outside of all transformed ancestors). On exiting fullscreen, it is returned to its original position in the DOM.
+- An `isRelocating` flag is checked in the lifecycle hooks (`connectedCallback` and `disconnectedCallback`) of the custom elements to prevent tearing down renderers or re-fetching/re-rendering data when they are relocated in the DOM.
+- For `<creatr-art-piece>` (which does not contain an iframe), the DOM move preserves the Three.js and canvas interactive states seamlessly with zero reload.
 - `:host(:fullscreen)` and `aspect-ratio: auto !important` styles are added to `<creatr-art-piece>` to support undistorted native element fullscreen.
 - Window `resize` event listeners are added to `<creatr-art-piece>` for both the Three.js (WebGL) and c2 (2D canvas) engines. When the custom element enters native fullscreen, the camera aspect ratios and renderers automatically resize to fit, ensuring the canvas content remains centered and sharp.
 - Tests in `ImmersiveRouteShell.test.tsx` and all other immersive page specs continue to pass successfully.
 
 ### Outcome
 - Visitors on desktop, Android, and iPad can view interactive embeds in native, full-resolution, centered fullscreen without any clipping or layout regressions.
-- Interactive state (such as 3D controls and camera coordinates) is perfectly preserved without reloading the iframe.
-- iPhone visitors retain full access to fullscreen overlays via the CSS fixed wrapper fallback or same-tab redirect.
+- iPhone visitors gain a true, working fullscreen overlay experience that escapes host site transform traps, and can easily exit fullscreen mode since the close button is no longer cut off.
+- Interactive state (such as 3D controls and camera coordinates) is perfectly preserved on desktop, Android, iPad, and for `<creatr-art-piece>` on iPhone without reloading.
 
 ---
 
