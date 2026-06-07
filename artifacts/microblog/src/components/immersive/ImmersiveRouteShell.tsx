@@ -19,7 +19,6 @@ type EmbedCodes = {
   plain: { label: string; code: string };
   gallery: { label: string; code: string };
   galleryCms?: { label: string; code: string };
-  galleryAdaptive?: { label: string; code: string };
 };
 
 type ImmersiveRouteShellProps = {
@@ -33,7 +32,6 @@ type ImmersiveRouteShellProps = {
   isEmbedMode?: boolean;
   showEmbedFullscreenControl?: boolean;
   suppressFullscreenControlOnIPhone?: boolean;
-  adaptiveFullscreenControlOnIPhone?: boolean;
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
   enableIPhoneEmbedLauncher?: boolean;
@@ -206,7 +204,6 @@ export function ImmersiveRouteShell({
   isEmbedMode = false,
   showEmbedFullscreenControl = true,
   suppressFullscreenControlOnIPhone = false,
-  adaptiveFullscreenControlOnIPhone = false,
   canonicalHref,
   embedCodes,
   enableIPhoneEmbedLauncher = false,
@@ -218,20 +215,10 @@ export function ImmersiveRouteShell({
   const [isEmbedFocusMode, setIsEmbedFocusMode] = useState(false);
   const isEmbedExpanded = isEmbedFullscreen || isEmbedFocusMode;
   const [hasWrapper, setHasWrapper] = useState(false);
-  const [adaptiveTimedOut, setAdaptiveTimedOut] = useState(false);
-  const isIPhoneEmbed = isEmbedMode && isIPhoneWebKitBrowser();
-  const adaptiveActive = isIPhoneEmbed && adaptiveFullscreenControlOnIPhone;
-  const adaptiveFallbackToLink = adaptiveActive && adaptiveTimedOut && !hasWrapper;
 
   useEffect(() => {
     isFullscreenRef.current = isFullscreen;
   }, [isFullscreen]);
-
-  useEffect(() => {
-    if (!adaptiveActive || hasWrapper) return;
-    const timeoutId = window.setTimeout(() => setAdaptiveTimedOut(true), 3000);
-    return () => window.clearTimeout(timeoutId);
-  }, [adaptiveActive, hasWrapper]);
 
   useEffect(() => {
     if (!isEmbedMode) return;
@@ -455,9 +442,9 @@ export function ImmersiveRouteShell({
         {renderScene({ fullscreen: isEmbedExpanded, isMobile: false })}
         <div className="pointer-events-none absolute inset-0 z-10">
           <div className="pointer-events-auto absolute bottom-[calc(1rem+env(safe-area-inset-bottom))] right-[calc(1rem+env(safe-area-inset-right))] z-20 flex items-center gap-2">
-            {(!(isIPhoneEmbed && !hasWrapper) || adaptiveFallbackToLink) && (
+            {!(isEmbedMode && isIPhoneWebKitBrowser() && !hasWrapper) && (
               <>
-                {canonicalHref && (!showEmbedFullscreenControl || adaptiveFallbackToLink) ? (
+                {canonicalHref && !showEmbedFullscreenControl ? (
                   <a
                     href={(() => {
                       try {
@@ -478,8 +465,7 @@ export function ImmersiveRouteShell({
                   </a>
                 ) : null}
                 {showEmbedFullscreenControl
-                && !(suppressFullscreenControlOnIPhone && isIPhoneWebKitBrowser())
-                && !adaptiveFallbackToLink ? (
+                && !(suppressFullscreenControlOnIPhone && isIPhoneWebKitBrowser()) ? (
                   <FullscreenToggleButton
                     isFullscreen={isEmbedExpanded}
                     onToggle={handleEmbedToggle}
@@ -551,9 +537,6 @@ export function ImmersiveRouteShell({
               <EmbedCopyButton label={embedCodes.gallery.label} code={embedCodes.gallery.code} />
               {embedCodes.galleryCms && (
                 <EmbedCopyButton label={embedCodes.galleryCms.label} code={embedCodes.galleryCms.code} />
-              )}
-              {embedCodes.galleryAdaptive && (
-                <EmbedCopyButton label={embedCodes.galleryAdaptive.label} code={embedCodes.galleryAdaptive.code} />
               )}
             </section>
           )}

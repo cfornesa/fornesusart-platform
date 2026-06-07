@@ -187,7 +187,6 @@ export default function ImmersiveImagePage() {
   );
   const isEmbedMode = searchParams.get("embed") === "1";
   const isCmsEmbed = searchParams.get("cms") === "1";
-  const isAdaptiveEmbed = searchParams.get("adaptive") === "1";
 
   const canonicalHref = useMemo(
     () => encodedRef ? `${window.location.origin}${buildImmersiveImageHref(imageSrc, metadata)}` : "",
@@ -204,10 +203,6 @@ export default function ImmersiveImagePage() {
   );
   const galleryCmsEmbedCode = useMemo(
     () => encodedRef ? buildImageGalleryEmbedHtml(encodedRef, metadata, window.location.origin, "cms") : "",
-    [encodedRef, metadata],
-  );
-  const galleryAdaptiveEmbedCode = useMemo(
-    () => encodedRef ? buildImageGalleryEmbedHtml(encodedRef, metadata, window.location.origin, "adaptive") : "",
     [encodedRef, metadata],
   );
 
@@ -233,13 +228,11 @@ export default function ImmersiveImagePage() {
       onToggleFullscreen={() => setIsFullscreen((current) => !current)}
       isEmbedMode={isEmbedMode}
       suppressFullscreenControlOnIPhone={isCmsEmbed}
-      adaptiveFullscreenControlOnIPhone={isAdaptiveEmbed}
       canonicalHref={canonicalHref}
       embedCodes={encodedRef ? {
         plain: { label: "Embed Piece", code: plainEmbedCode },
         gallery: { label: "Embed Interactive (Custom)", code: galleryEmbedCode },
         galleryCms: { label: "Embed Interactive (CMS)", code: galleryCmsEmbedCode },
-        galleryAdaptive: { label: "Embed Interactive (Adaptive)", code: galleryAdaptiveEmbedCode },
       } : undefined}
       metadataCard={
         <ImmersiveMetadataCard
