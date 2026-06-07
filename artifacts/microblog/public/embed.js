@@ -1,6 +1,30 @@
 (function() {
   if (customElements.get("creatr-art-piece")) return;
 
+  // If running inside an iframe, style the parent document body/html to center the content
+  if (typeof window !== "undefined" && window.self !== window.top) {
+    try {
+      const style = document.createElement("style");
+      style.innerHTML = `
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: center !important;
+          align-items: center !important;
+          overflow: hidden !important;
+          background: transparent !important;
+        }
+      `;
+      document.head.appendChild(style);
+    } catch (e) {
+      console.warn("Failed to inject iframe centering styles:", e);
+    }
+  }
+
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       let script = document.querySelector(`script[src="${src}"]`);
@@ -142,8 +166,12 @@
             display: block;
             position: relative;
             width: 100%;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
             aspect-ratio: 16 / 9;
-            min-height: 300px;
+            margin: auto;
+            box-sizing: border-box;
             overflow: hidden;
             background: #0a0a14;
             border-radius: 12px;
@@ -227,7 +255,43 @@
       const container = this.shadowRoot.getElementById("stage-container");
       const btn = this.shadowRoot.querySelector(".fullscreen-btn");
 
+      const userAgent = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+      const maxTouchPoints = (typeof navigator !== "undefined" && navigator.maxTouchPoints) || 0;
+      const isIPad = /\biPad\b/i.test(userAgent) || (/\bMacintosh\b/i.test(userAgent) && maxTouchPoints > 1);
+      const isIPhone = /\biPhone\b/i.test(userAgent) && /AppleWebKit/i.test(userAgent) && !isIPad;
+
       btn.addEventListener("click", () => {
+        if (isIPhone && window.self !== window.top) {
+          const targetUrl = new URL(`${this.origin}/immersive/pieces/${pieceId}`, window.location.origin);
+          if (version) {
+            targetUrl.searchParams.set("version", version);
+          }
+          targetUrl.searchParams.set("fullscreen", "1");
+          const redirectStr = targetUrl.toString();
+
+          let opened = false;
+          try {
+            const win = window.open(redirectStr, "_blank", "noopener,noreferrer");
+            if (win) {
+              opened = true;
+            }
+          } catch (e) {}
+
+          if (!opened) {
+            try {
+              if (window.top && window.top !== window) {
+                window.top.location.href = redirectStr;
+                opened = true;
+              }
+            } catch (e) {}
+          }
+
+          if (!opened) {
+            window.location.href = redirectStr;
+          }
+          return;
+        }
+
         this.isFullscreen = !this.isFullscreen;
         if (this.isFullscreen) {
           if (this.requestFullscreen) {
@@ -474,8 +538,12 @@
             display: block;
             position: relative;
             width: 100%;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
             aspect-ratio: 16 / 9;
-            min-height: 300px;
+            margin: auto;
+            box-sizing: border-box;
             overflow: hidden;
             background: #0a0a14;
             border-radius: 12px;
@@ -586,8 +654,12 @@
             display: block;
             position: relative;
             width: 100%;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
             aspect-ratio: 16 / 9;
-            min-height: 300px;
+            margin: auto;
+            box-sizing: border-box;
             overflow: hidden;
             background: #0a0a14;
             border-radius: 12px;

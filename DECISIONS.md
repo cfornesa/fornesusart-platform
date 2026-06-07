@@ -34,10 +34,10 @@ options regardless of session context. -->
 
 ---
 
-## 2026-06-06 — Pure Native Fullscreen inside IFrame for Non-iPhone Embeds + DOM Relocation Fallback for iOS
+## 2026-06-06 — Pure Native Fullscreen inside IFrame for Non-iPhone Embeds + DOM Relocation Fallback for iOS + Nested IFrame Escape
 
 ### Trigger
-On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibits, and art pieces) experienced layout clipping and offset regressions when toggling fullscreen. This occurred because using a postMessage message channel to trigger native fullscreen on the parent page asynchronously loses user activation, causing it to fall back to CSS fixed positioning, which gets trapped and cropped inside transformed host-page ancestor containers. Additionally, on iPhone/iOS Safari (where native element fullscreen is unsupported), the CSS fixed positioning fallback was also trapped and cropped by transformed containers on host sites (such as Hostinger template containers).
+On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibits, and art pieces) experienced layout clipping and offset regressions when toggling fullscreen. This occurred because using a postMessage message channel to trigger native fullscreen on the parent page asynchronously loses user activation, causing it to fall back to CSS fixed positioning, which gets trapped and cropped inside transformed host-page ancestor containers. Additionally, on iPhone/iOS Safari (where native element fullscreen is unsupported), the CSS fixed positioning fallback was also trapped and cropped by transformed containers on host sites (such as Hostinger template containers). Finally, if the embed script snippet is pasted inside a nested iframe module (e.g., Hostinger Web Builder's custom HTML block), the entire wrapper custom element is sandboxed inside a small outer iframe viewport, rendering the CSS fixed overlay layout trapped and cut off inside the iframe module's bounding box.
 
 ### Decisions Confirmed
 - **Pure IFrame Native Fullscreen** is used as the primary fullscreen pathway on all non-iPhone devices (desktop, Android, iPad).
@@ -45,6 +45,8 @@ On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibi
 - By entering native fullscreen inside the iframe, the browser promotes the element directly to the top layer, completely bypassing all ancestor transforms, perspectives, and overflow clipping constraints on the host page.
 - On iPhone Safari (which lacks native element fullscreen support), the control continues to fall back to the postMessage parent wrapper toggle (which applies a CSS fixed overlay to the host page) or top-level redirect.
 - To prevent the CSS fixed overlay from getting trapped and cut off by host page ancestor container transforms on iPhone/iOS, `embed.js` implements a dynamic **DOM Promotion/Demotion** fallback. When entering fullscreen, the custom element is detached and appended directly as a child of `document.body` (outside of all transformed ancestors). On exiting fullscreen, it is returned to its original position in the DOM.
+- If running on iPhone inside a nested iframe module where `window.parent !== window.top` (e.g. Hostinger Web Builder), `ImmersiveRouteShell.tsx` detects this situation and bypasses the postMessage wrapper overlay (which would be trapped in the iframe module bounds). Instead, it forces a top-level location redirect (or new tab escape if top navigation is restricted) to launch the canonical fullscreen URL in its own window.
+- Added `margin: 0 auto` to `:host` styles in `embed.js` and `RESPONSIVE_EMBED_IFRAME_STYLE` in `immersive-view.ts` to guarantee that all embeds center themselves horizontally on desktop pages.
 - An `isRelocating` flag is checked in the lifecycle hooks (`connectedCallback` and `disconnectedCallback`) of the custom elements to prevent tearing down renderers or re-fetching/re-rendering data when they are relocated in the DOM.
 - For `<creatr-art-piece>` (which does not contain an iframe), the DOM move preserves the Three.js and canvas interactive states seamlessly with zero reload.
 - `:host(:fullscreen)` and `aspect-ratio: auto !important` styles are added to `<creatr-art-piece>` to support undistorted native element fullscreen.
@@ -53,7 +55,8 @@ On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibi
 
 ### Outcome
 - Visitors on desktop, Android, and iPad can view interactive embeds in native, full-resolution, centered fullscreen without any clipping or layout regressions.
-- iPhone visitors gain a true, working fullscreen overlay experience that escapes host site transform traps, and can easily exit fullscreen mode since the close button is no longer cut off.
+- iPhone visitors gain a true, working fullscreen overlay experience that escapes host site transform traps.
+- iPhone visitors on site-builders (like Hostinger Web Builder) that embed HTML inside iframe modules gain a proper fullscreen display because the script detects the nested iframe environment and escapes it via redirect.
 - Interactive state (such as 3D controls and camera coordinates) is perfectly preserved on desktop, Android, iPad, and for `<creatr-art-piece>` on iPhone without reloading.
 
 ---
@@ -1588,3 +1591,17 @@ Unchanged: `"openrouter"`, `"opencode-zen"`, `"opencode-go"`, `"google"`, `"mist
 - Multiple AI profiles per vendor are now supported (e.g. separate profiles for different model tiers on the same vendor).
 - API keys remain vendor-scoped (one key per vendor, applied to all profiles for that vendor).
 - Old code using `vendorKeys` on request/response bodies will fail type-checking and must use `profiles` instead.
+
+---
+
+### 2026-06-06 — IFrame Centering and iPhone Nested Fullscreen Escapes
+
+#### Decisions Confirmed
+- **Responsive IFrame Embed Centering**: When our script is loaded inside an iframe (e.g., in a Hostinger Web Builder HTML block), `embed.js` automatically styles the parent document's `html` and `body` as a flexbox container (`display: flex; justify-content: center; align-items: center;`) with hidden overflows to center and align the Web Component horizontally and vertically.
+- **Aspect Ratio Fit Without Overflow**: Web Component custom elements (`CreatrArtPiece`, `CreatrImmersiveImage`, and `CreatrExhibitWall`) are styled to fit inside the parent container dynamically using `width: 100%; height: auto; max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; margin: auto; box-sizing: border-box;` in their `:host` styles. This avoids overflowing the parent layout or getting clipped.
+- **IFrame Fullscreen Escape for Art Pieces**: Added a redirect/new-tab escape mechanism to `<creatr-art-piece>` (art piece embeds) on iPhone when running inside an iframe. If `window.self !== window.top` and the user-agent is iPhone, clicking the fullscreen control constructs the canonical immersive route URL with `?fullscreen=1` and escapes the iframe container using `window.open` (or falls back to top-level/iframe redirection).
+- **Robust iPhone Redirection in Immersive Shell**: Improved `handleEmbedToggle` inside `ImmersiveRouteShell.tsx` (used by images and exhibits) to use the same redirection/new-tab sequence (`window.open` first to preserve user click-gesture context and avoid sandbox blocks, falling back to `window.top.location.href`, and finally `window.location.href`).
+
+#### Outcome
+- Embeds are centered horizontally and vertically on site builders like Hostinger without layout shifts or overflow clipping.
+- iPhone visitors can view all embedded art pieces, images, and exhibits in true fullscreen via a standalone browser tab redirection when trapped in nested iframe modules.

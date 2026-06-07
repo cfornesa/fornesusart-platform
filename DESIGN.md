@@ -198,6 +198,9 @@
 2026-06-06 · DIRECTION · Employs progressive HTML/CSS Web Component iframe wrapper resizers to escape iframe clipping on iPhones without duplicating codebase engines.
     [Surfaced when implementing <creatr-immersive-image> and <creatr-exhibit-wall> wrapper elements.]
 
+2026-06-06 · DIRECTION · Prioritizes responsive aspect-ratio fitting and document body flex-centering inside nested iframe environments (like Hostinger Web Builder HTML modules) to ensure embeds look premium and aligned across all viewport sizes.
+    [Surfaced when resolving Hostinger Web Builder desktop centering and mobile fullscreen cutoff issues.]
+
 ---
 
 <!-- The agent holds the brush. You choose what gets painted.
