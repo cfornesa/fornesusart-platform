@@ -34,6 +34,27 @@ options regardless of session context. -->
 
 ---
 
+## 2026-06-06 — Pure Native Fullscreen inside IFrame for Non-iPhone Embeds
+
+### Trigger
+On desktop, Android, and iPad, iframe-wrapped interactive embeds (images, exhibits, and art pieces) experienced layout clipping and offset regressions when toggling fullscreen. This occurred because using a postMessage message channel to trigger native fullscreen on the parent page asynchronously loses user activation, causing it to fall back to CSS fixed positioning, which gets trapped and cropped inside transformed host-page ancestor containers.
+
+### Decisions Confirmed
+- **Pure IFrame Native Fullscreen** is used as the primary fullscreen pathway on all non-iPhone devices (desktop, Android, iPad).
+- Clicking the immersive fullscreen control inside the iframe synchronously requests native element fullscreen on the container (`embedContainerRef.current`) inside the iframe itself. This preserves the user activation context, ensuring the browser permits native fullscreen.
+- By entering native fullscreen inside the iframe, the browser promotes the element directly to the top layer, completely bypassing all ancestor transforms, perspectives, and overflow clipping constraints on the host page.
+- On iPhone Safari (which lacks native element fullscreen support), the control continues to fall back to the postMessage parent wrapper toggle (which applies a CSS fixed overlay to the host page) or top-level redirect.
+- `:host(:fullscreen)` and `aspect-ratio: auto !important` styles are added to `<creatr-art-piece>` to support undistorted native element fullscreen.
+- Window `resize` event listeners are added to `<creatr-art-piece>` for both the Three.js (WebGL) and c2 (2D canvas) engines. When the custom element enters native fullscreen, the camera aspect ratios and renderers automatically resize to fit, ensuring the canvas content remains centered and sharp.
+- Tests in `ImmersiveRouteShell.test.tsx` and all other immersive page specs continue to pass successfully.
+
+### Outcome
+- Visitors on desktop, Android, and iPad can view interactive embeds in native, full-resolution, centered fullscreen without any clipping or layout regressions.
+- Interactive state (such as 3D controls and camera coordinates) is perfectly preserved without reloading the iframe.
+- iPhone visitors retain full access to fullscreen overlays via the CSS fixed wrapper fallback or same-tab redirect.
+
+---
+
 ## 2026-06-06 — iPhone Progressive Web Component Embed for Images and Exhibits
 
 ### Trigger

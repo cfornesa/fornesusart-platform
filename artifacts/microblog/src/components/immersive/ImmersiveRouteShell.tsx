@@ -335,20 +335,20 @@ export function ImmersiveRouteShell({
 
   if (isEmbedMode) {
     async function handleEmbedToggle() {
-      if (hasWrapper) {
-        try {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage(
-              { type: "creatr-toggle-fullscreen", value: !isEmbedFocusMode },
-              "*"
-            );
-            setIsEmbedFocusMode((prev) => !prev);
-            return;
-          }
-        } catch {}
-      }
-
       if (isIPhoneWebKitBrowser()) {
+        if (hasWrapper) {
+          try {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage(
+                { type: "creatr-toggle-fullscreen", value: !isEmbedFocusMode },
+                "*"
+              );
+              setIsEmbedFocusMode((prev) => !prev);
+              return;
+            }
+          } catch {}
+        }
+
         const targetUrl = new URL(canonicalHref || window.location.href, window.location.origin);
         targetUrl.searchParams.set("fullscreen", "1");
         const redirectStr = targetUrl.toString();

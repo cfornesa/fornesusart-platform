@@ -2,6 +2,8 @@
 to the human before proceeding. Do not act on a pending entry — wait for explicit confirmation
 or rejection. -->
 
+2026-06-06 · EMBEDS · Resolved interactive embed fullscreen regressions by making desktop/Android/iPad iframe embeds request native fullscreen inside the iframe (using `requestElementFullscreen` in `ImmersiveRouteShell.tsx`) rather than passing a postMessage to the parent wrapper. This preserves synchronous user-activation, ensuring native element fullscreen is successful and escapes host-page transform/clipping traps. Added `:host(:fullscreen)` and `aspect-ratio: auto !important` styles to `<creatr-art-piece>`, and registered resize event listeners to automatically update WebGL (Three.js) and 2D canvas (c2) dimensions, guaranteeing correctly centered and scaled layouts upon fullscreen activation.
+
 2026-06-06 · EMBEDS · The default interactive art piece, image, and exhibit embeds use unified progressive enhancement markup (Custom Elements `<creatr-art-piece>`, `<creatr-immersive-image>`, and `<creatr-exhibit-wall>` wrapping a fallback `<iframe>` paired with `/embed.js`). When JavaScript is enabled, the Custom Elements establish a postMessage handshake. On iOS iPhones, the control is only shown when wrapped, and clicking it signals the parent to resize to a fixed full-viewport layout using dynamic viewport height (100dvh) and safe-area insets, overcoming iframe sandbox blocks.
 
 2026-04-28 · PRODUCT · The project direction is an author-owned microblog where only the site owner publishes canonical posts, while signed-in visitors can comment and react.

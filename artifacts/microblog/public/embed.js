@@ -31,6 +31,7 @@
       this.attachShadow({ mode: "open" });
       this.isFullscreen = false;
       this.cleanup = null;
+      this.handleFullscreenChange = this.handleFullscreenChange.bind(this);
     }
 
     async connectedCallback() {
@@ -39,6 +40,8 @@
       if (fallback) {
         fallback.remove();
       }
+
+      document.addEventListener("fullscreenchange", this.handleFullscreenChange);
 
       const pieceId = this.getAttribute("piece-id");
       if (!pieceId) {
@@ -78,6 +81,26 @@
       if (this.cleanup) {
         try { this.cleanup(); } catch (e) {}
       }
+      document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
+      document.body.style.overflow = "";
+    }
+
+    handleFullscreenChange() {
+      const isNativeFs = document.fullscreenElement === this;
+      if (!isNativeFs && this.isFullscreen) {
+        this.isFullscreen = false;
+        this.classList.remove("fullscreen");
+        document.body.style.overflow = "";
+        const btn = this.shadowRoot.querySelector(".fullscreen-btn");
+        if (btn) {
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+          `;
+        }
+        window.dispatchEvent(new Event("resize"));
+      }
     }
 
     async renderPiece(data) {
@@ -97,7 +120,7 @@
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
-          :host(.fullscreen) {
+          :host(.fullscreen), :host(:fullscreen) {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -105,6 +128,7 @@
             width: 100dvw !important;
             height: 100vh !important;
             height: 100dvh !important;
+            aspect-ratio: auto !important;
             z-index: 9999999 !important;
             border-radius: 0 !important;
             border: none !important;
@@ -177,14 +201,36 @@
       btn.addEventListener("click", () => {
         this.isFullscreen = !this.isFullscreen;
         if (this.isFullscreen) {
-          this.classList.add("fullscreen");
-          btn.innerHTML = `
-            <svg viewBox="0 0 24 24">
-              <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
-            </svg>
-          `;
-          document.body.style.overflow = "hidden";
+          if (this.requestFullscreen) {
+            this.requestFullscreen().then(() => {
+              this.classList.add("fullscreen");
+              btn.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
+                </svg>
+              `;
+            }).catch(() => {
+              this.classList.add("fullscreen");
+              btn.innerHTML = `
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
+                </svg>
+              `;
+              document.body.style.overflow = "hidden";
+            });
+          } else {
+            this.classList.add("fullscreen");
+            btn.innerHTML = `
+              <svg viewBox="0 0 24 24">
+                <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" />
+              </svg>
+            `;
+            document.body.style.overflow = "hidden";
+          }
         } else {
+          if (document.fullscreenElement === this) {
+            document.exitFullscreen().catch(() => {});
+          }
           this.classList.remove("fullscreen");
           btn.innerHTML = `
             <svg viewBox="0 0 24 24">
@@ -232,7 +278,17 @@
 
         let sketchFactory = new Function("return (" + generatedCode + ")")();
         sketchFactory({ c2: window.c2, canvas, startFrame });
+
+        const handleResize = () => {
+          if (canvas && c2Container) {
+            canvas.width = c2Container.clientWidth;
+            canvas.height = c2Container.clientHeight;
+          }
+        };
+        window.addEventListener("resize", handleResize);
+
         this.cleanup = () => {
+          window.removeEventListener("resize", handleResize);
           stopFrame();
         };
       } else if (engine === "three") {
@@ -345,7 +401,19 @@
           animateControls();
         }
 
+        const handleResize = () => {
+          if (state.renderer && state.camera && canvas && threeContainer) {
+            const width = threeContainer.clientWidth;
+            const height = threeContainer.clientHeight;
+            state.camera.aspect = width / height;
+            state.camera.updateProjectionMatrix();
+            state.renderer.setSize(width, height);
+          }
+        };
+        window.addEventListener("resize", handleResize);
+
         this.cleanup = () => {
+          window.removeEventListener("resize", handleResize);
           rafIds.forEach(cancelAnimationFrame);
           controls?.dispose();
           state.renderer?.dispose();
@@ -380,7 +448,7 @@
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
-          :host(.fullscreen) {
+          :host(.fullscreen), :host(:fullscreen) {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -388,6 +456,7 @@
             width: 100dvw !important;
             height: 100vh !important;
             height: 100dvh !important;
+            aspect-ratio: auto !important;
             z-index: 9999999 !important;
             border-radius: 0 !important;
             border: none !important;
@@ -404,15 +473,31 @@
         <slot></slot>
       `;
       this.handleMessage = this.handleMessage.bind(this);
+      this.handleFullscreenChange = this.handleFullscreenChange.bind(this);
     }
 
     connectedCallback() {
       window.addEventListener("message", this.handleMessage);
+      document.addEventListener("fullscreenchange", this.handleFullscreenChange);
     }
 
     disconnectedCallback() {
       window.removeEventListener("message", this.handleMessage);
+      document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
       document.body.style.overflow = "";
+    }
+
+    handleFullscreenChange() {
+      const isNativeFs = document.fullscreenElement === this;
+      const iframe = this.querySelector("iframe");
+      if (!isNativeFs && this.classList.contains("fullscreen")) {
+        this.classList.remove("fullscreen");
+        document.body.style.overflow = "";
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: "creatr-parent-exit-fullscreen" }, "*");
+        }
+        window.dispatchEvent(new Event("resize"));
+      }
     }
 
     handleMessage(e) {
@@ -426,9 +511,21 @@
       if (e.data && e.data.type === "creatr-toggle-fullscreen") {
         const shouldBeFullscreen = !!e.data.value;
         if (shouldBeFullscreen) {
-          this.classList.add("fullscreen");
-          document.body.style.overflow = "hidden";
+          if (this.requestFullscreen) {
+            this.requestFullscreen().then(() => {
+              this.classList.add("fullscreen");
+            }).catch(() => {
+              this.classList.add("fullscreen");
+              document.body.style.overflow = "hidden";
+            });
+          } else {
+            this.classList.add("fullscreen");
+            document.body.style.overflow = "hidden";
+          }
         } else {
+          if (document.fullscreenElement === this) {
+            document.exitFullscreen().catch(() => {});
+          }
           this.classList.remove("fullscreen");
           document.body.style.overflow = "";
         }
@@ -454,7 +551,7 @@
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
           }
-          :host(.fullscreen) {
+          :host(.fullscreen), :host(:fullscreen) {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -462,6 +559,7 @@
             width: 100dvw !important;
             height: 100vh !important;
             height: 100dvh !important;
+            aspect-ratio: auto !important;
             z-index: 9999999 !important;
             border-radius: 0 !important;
             border: none !important;
@@ -478,15 +576,31 @@
         <slot></slot>
       `;
       this.handleMessage = this.handleMessage.bind(this);
+      this.handleFullscreenChange = this.handleFullscreenChange.bind(this);
     }
 
     connectedCallback() {
       window.addEventListener("message", this.handleMessage);
+      document.addEventListener("fullscreenchange", this.handleFullscreenChange);
     }
 
     disconnectedCallback() {
       window.removeEventListener("message", this.handleMessage);
+      document.removeEventListener("fullscreenchange", this.handleFullscreenChange);
       document.body.style.overflow = "";
+    }
+
+    handleFullscreenChange() {
+      const isNativeFs = document.fullscreenElement === this;
+      const iframe = this.querySelector("iframe");
+      if (!isNativeFs && this.classList.contains("fullscreen")) {
+        this.classList.remove("fullscreen");
+        document.body.style.overflow = "";
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: "creatr-parent-exit-fullscreen" }, "*");
+        }
+        window.dispatchEvent(new Event("resize"));
+      }
     }
 
     handleMessage(e) {
@@ -500,9 +614,21 @@
       if (e.data && e.data.type === "creatr-toggle-fullscreen") {
         const shouldBeFullscreen = !!e.data.value;
         if (shouldBeFullscreen) {
-          this.classList.add("fullscreen");
-          document.body.style.overflow = "hidden";
+          if (this.requestFullscreen) {
+            this.requestFullscreen().then(() => {
+              this.classList.add("fullscreen");
+            }).catch(() => {
+              this.classList.add("fullscreen");
+              document.body.style.overflow = "hidden";
+            });
+          } else {
+            this.classList.add("fullscreen");
+            document.body.style.overflow = "hidden";
+          }
         } else {
+          if (document.fullscreenElement === this) {
+            document.exitFullscreen().catch(() => {});
+          }
           this.classList.remove("fullscreen");
           document.body.style.overflow = "";
         }
