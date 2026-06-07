@@ -18,6 +18,7 @@ type ImmersiveMetadataCardProps = {
 type EmbedCodes = {
   plain: { label: string; code: string };
   gallery: { label: string; code: string };
+  galleryCms?: { label: string; code: string };
 };
 
 type ImmersiveRouteShellProps = {
@@ -30,6 +31,7 @@ type ImmersiveRouteShellProps = {
   sceneHeightClassName?: string;
   isEmbedMode?: boolean;
   showEmbedFullscreenControl?: boolean;
+  suppressFullscreenControlOnIPhone?: boolean;
   canonicalHref?: string;
   embedCodes?: EmbedCodes;
   enableIPhoneEmbedLauncher?: boolean;
@@ -201,6 +203,7 @@ export function ImmersiveRouteShell({
   sceneHeightClassName = "h-[40svh] min-h-[300px]",
   isEmbedMode = false,
   showEmbedFullscreenControl = true,
+  suppressFullscreenControlOnIPhone = false,
   canonicalHref,
   embedCodes,
   enableIPhoneEmbedLauncher = false,
@@ -461,7 +464,8 @@ export function ImmersiveRouteShell({
                     <span aria-hidden="true">VR</span>
                   </a>
                 ) : null}
-                {showEmbedFullscreenControl ? (
+                {showEmbedFullscreenControl
+                && !(suppressFullscreenControlOnIPhone && isIPhoneWebKitBrowser()) ? (
                   <FullscreenToggleButton
                     isFullscreen={isEmbedExpanded}
                     onToggle={handleEmbedToggle}
@@ -531,6 +535,9 @@ export function ImmersiveRouteShell({
             <section className="flex flex-wrap gap-2 border-b border-white/10 px-4 py-3 sm:px-6">
               <EmbedCopyButton label={embedCodes.plain.label} code={embedCodes.plain.code} />
               <EmbedCopyButton label={embedCodes.gallery.label} code={embedCodes.gallery.code} />
+              {embedCodes.galleryCms && (
+                <EmbedCopyButton label={embedCodes.galleryCms.label} code={embedCodes.galleryCms.code} />
+              )}
             </section>
           )}
 

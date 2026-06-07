@@ -130,10 +130,14 @@ export function buildPieceGalleryEmbedHtml(
   versionId: number | null | undefined,
   title: string,
   origin = window.location.origin,
+  variant?: "custom" | "cms",
 ): string {
   const params = new URLSearchParams({ embed: "1" });
   if (versionId && Number.isFinite(versionId) && versionId > 0) {
     params.set("version", String(versionId));
+  }
+  if (variant === "cms") {
+    params.set("cms", "1");
   }
   const src = `${origin}/immersive/pieces/${pieceId}?${params}`;
   const safeTitle = title.replace(/"/g, "&quot;");
@@ -146,11 +150,15 @@ export function buildImageGalleryEmbedHtml(
   encodedRef: string,
   metadata: ImmersiveImageMetadata,
   origin = window.location.origin,
+  variant?: "custom" | "cms",
 ): string {
   const params = new URLSearchParams({ embed: "1" });
   if (metadata.alt?.trim()) params.set("alt", metadata.alt.trim());
   if (metadata.title?.trim()) params.set("title", metadata.title.trim());
   if (metadata.caption?.trim()) params.set("caption", metadata.caption.trim());
+  if (variant === "cms") {
+    params.set("cms", "1");
+  }
   const src = `${origin}/immersive/images/${encodedRef}?${params}`;
   const safeTitle = (metadata.title || metadata.alt || "Immersive image").replace(/"/g, "&quot;");
   const iframeHtml = `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="allow-scripts allow-same-origin"></iframe>`;
@@ -189,8 +197,13 @@ export function buildExhibitGalleryEmbedHtml(
   slug: string,
   name: string,
   origin = window.location.origin,
+  variant?: "custom" | "cms",
 ): string {
-  const src = `${origin}/immersive/exhibits/${slug}?embed=1`;
+  const params = new URLSearchParams({ embed: "1" });
+  if (variant === "cms") {
+    params.set("cms", "1");
+  }
+  const src = `${origin}/immersive/exhibits/${slug}?${params}`;
   const safeTitle = name.replace(/"/g, "&quot;");
   const iframeHtml = `<iframe src="${src}" width="100%" style="${RESPONSIVE_EMBED_IFRAME_STYLE}" title="${safeTitle}" frameborder="0" loading="lazy" allowfullscreen allow="fullscreen" sandbox="${INTERACTIVE_IMMERSIVE_EMBED_SANDBOX}"></iframe>`;
   return `<creatr-exhibit-wall slug="${slug}" origin="${origin}">${iframeHtml}</creatr-exhibit-wall><script src="${origin}/embed.js" defer></script>`;
